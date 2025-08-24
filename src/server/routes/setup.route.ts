@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { reconnectDatabase } from "@/db";
 import { createAtlasClient } from "@/server/lib/atlas-api/atlas-api.client";
+import { resetAuth } from "@/server/lib/auth";
 import configManager from "@/server/lib/config-manager";
 
 import packageJson from "../../../package.json";
@@ -175,6 +176,7 @@ const saveSetupConfig = os
       );
 
       configManager.invalidateCache();
+      resetAuth();
 
       const newDb = await reconnectDatabase();
 
