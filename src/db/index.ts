@@ -69,7 +69,19 @@ export const reconnectDatabase = async () => {
     delete newGlobalThis[queryClientInstanceName];
   }
 
+  // Reset the db instance so it gets recreated with new config
+  dbInstance = null;
+
   return getDrizzleInstance();
 };
 
-export const db = getDrizzleInstance();
+let dbInstance: ReturnType<typeof drizzle> | null = null;
+
+export const db = new Proxy({} as ReturnType<typeof drizzle>, {
+  get(target, prop) {
+    if (!dbInstance) {
+      dbInstance = getDrizzleInstance();
+    }
+    return (dbInstance as any)[prop];
+  }
+});
