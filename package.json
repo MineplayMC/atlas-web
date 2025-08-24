@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build && tsc --noEmit && eslint .",
-    "start": "(test -f ./config/config.json && pnpm db:push || echo 'No config, skipping migrations') && node .output/server/index.mjs",
+    "start": "pnpm db:push || node .output/server/index.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "db:generate": "drizzle-kit generate",
