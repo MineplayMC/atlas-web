@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from "react";
+
 import { Link } from "@tanstack/react-router";
 import {
   FileText,
@@ -10,38 +11,43 @@ import {
 } from "lucide-react";
 
 import { useAuthedQuery } from "@/features/auth/services/auth.query";
+import { useSetupStatus } from "@/hooks/use-setup-status";
 import { authClient } from "@/lib/auth-client";
 
 const Header = React.memo(() => {
   const { data: session } = useAuthedQuery();
+  const config = useSetupStatus();
 
-  const links = useMemo(() => [
-    {
-      name: "Overview",
-      icon: LayoutDashboardIcon,
-      to: "/",
-    },
-    {
-      name: "Groups",
-      icon: Users,
-      to: "/groups",
-    },
-    {
-      name: "Servers",
-      icon: Server,
-      to: "/servers",
-    },
-    {
-      name: "Templates",
-      icon: FileText,
-      to: "/templates",
-    },
-    {
-      name: "Admin",
-      icon: Settings,
-      to: "/admin",
-    },
-  ], []);
+  const links = useMemo(
+    () => [
+      {
+        name: "Overview",
+        icon: LayoutDashboardIcon,
+        to: "/",
+      },
+      {
+        name: "Groups",
+        icon: Users,
+        to: "/groups",
+      },
+      {
+        name: "Servers",
+        icon: Server,
+        to: "/servers",
+      },
+      {
+        name: "Templates",
+        icon: FileText,
+        to: "/templates",
+      },
+      {
+        name: "Admin",
+        icon: Settings,
+        to: "/admin",
+      },
+    ],
+    []
+  );
 
   const handleSignOut = useCallback(() => {
     authClient.signOut();
@@ -54,11 +60,13 @@ const Header = React.memo(() => {
           <div className="flex flex-row items-center py-4 sm:py-6">
             <Link to="/" className="flex items-center gap-3 sm:gap-4">
               <img
-                src="/logo.png"
-                alt="Atlas"
+                src={config.config?.brandingConfig?.logo || "/logo.png"}
+                alt={config.config?.brandingConfig?.displayName || "Atlas"}
                 className="h-6 w-6 sm:h-8 sm:w-8"
               />
-              <p className="text-xl font-semibold sm:text-2xl">Atlas</p>
+              <p className="text-xl font-semibold sm:text-2xl">
+                {config.config?.brandingConfig?.displayName || "Atlas"}
+              </p>
             </Link>
 
             <div className="ml-8 hidden items-center gap-4 sm:flex lg:gap-6">

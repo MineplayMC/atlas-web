@@ -4,11 +4,7 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    DATABASE_URL: z.url(),
-    ATLAS_API_URL: z.string().url(),
-    ATLAS_API_KEY: z.string().min(1),
-    IDENTITY_CLIENT_ID: z.string().min(1),
-    IDENTITY_CLIENT_SECRET: z.string().min(1),
+    DATABASE_URL: z.url().optional(),
   },
 
   /**
@@ -17,10 +13,7 @@ export const env = createEnv({
    */
   clientPrefix: "VITE_",
 
-  client: {
-    VITE_BASE_URL: z.string().url(),
-    VITE_ATLAS_WEBSOCKET_URL: z.string().url(),
-  },
+  client: {},
 
   /**
    * What object holds the environment variables at runtime. This is usually

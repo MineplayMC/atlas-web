@@ -16,12 +16,27 @@ import { NotFound } from "@/components/not-found";
 import { Toaster } from "@/components/ui/sonner";
 import { UploadProgressProvider } from "@/contexts/upload-progress-context";
 import { authQueryOptions } from "@/features/auth/services/auth.query";
+import { setupStatusQueryOptions } from "@/hooks/queries/use-setup-status-query";
+import { useSetupStatus } from "@/hooks/use-setup-status";
 import appCss from "@/styles/globals.css?url";
 import { seo } from "@/utils/seo";
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
+  const setup = useSetupStatus();
+
+  const primaryColor =
+    setup.config?.brandingConfig.primaryColor || "30, 56%, 65%";
+  const backgroundImage =
+    setup.config?.brandingConfig.backgroundImage || "/bg-darker.jpg";
+
   return (
-    <html suppressHydrationWarning>
+    <html
+      style={{
+        "--primary-plain": primaryColor,
+        "--background-image": `url(${backgroundImage})`,
+      }}
+      suppressHydrationWarning
+    >
       <head>
         <HeadContent />
         <style>
@@ -62,6 +77,7 @@ export const Route = createRootRouteWithContext<{
 }>()({
   beforeLoad: async ({ context }) => {
     const auth = await context.queryClient.ensureQueryData(authQueryOptions());
+    await context.queryClient.ensureQueryData(setupStatusQueryOptions());
 
     return {
       auth,

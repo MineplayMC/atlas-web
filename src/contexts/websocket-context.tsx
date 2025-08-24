@@ -10,7 +10,7 @@ import {
 
 import { useMutation } from "@tanstack/react-query";
 
-import { env } from "@/env";
+import { useSetupStatus } from "@/hooks/use-setup-status";
 import { orpc } from "@/lib/orpc";
 
 interface WebSocketMessage {
@@ -49,6 +49,7 @@ export const WebSocketProvider = ({
   children,
   serverId,
 }: WebSocketProviderProps) => {
+  const config = useSetupStatus();
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -67,7 +68,13 @@ export const WebSocketProvider = ({
   const connectRef = useRef<() => Promise<void>>(undefined);
 
   connectRef.current = async () => {
-    if (isUnmountedRef.current || isConnecting || isConnected || ws || activeConnections.get(serverId)) {
+    if (
+      isUnmountedRef.current ||
+      isConnecting ||
+      isConnected ||
+      ws ||
+      activeConnections.get(serverId)
+    ) {
       return;
     }
 
@@ -83,7 +90,7 @@ export const WebSocketProvider = ({
         return;
       }
 
-      const wsUrl = `${env.VITE_ATLAS_WEBSOCKET_URL}/api/v1/servers/${serverId}/ws?auth=${tokenData.token}`;
+      const wsUrl = `${config.config?.atlasConfig.websocketUrl}/api/v1/servers/${serverId}/ws?auth=${tokenData.token}`;
       const socket = new WebSocket(wsUrl);
       setWs(socket);
 
@@ -96,7 +103,6 @@ export const WebSocketProvider = ({
 
       socket.addEventListener("message", (event) => {
         const data: WebSocketMessage = JSON.parse(event.data);
-
 
         if (data.type === "auth-challenge") {
           tokenMutation
@@ -220,7 +226,7 @@ export const WebSocketProvider = ({
 
     return () => {
       isUnmountedRef.current = true;
-      
+
       // Clear all timers
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
@@ -239,10 +245,10 @@ export const WebSocketProvider = ({
 
       // Clean up active connections map
       activeConnections.delete(serverId);
-      
+
       // Clear subscribers using captured reference
       subscribers.clear();
-      
+
       // Reset all state
       setWs(null);
       setIsConnected(false);

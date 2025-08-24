@@ -10,13 +10,20 @@ import type { RouterClient } from "@orpc/server";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getHeaders } from "@tanstack/react-start/server";
 
-import { env } from "@/env";
+import configManager from "@/server/lib/config-manager";
 import router from "@/server/router";
 
 interface ORPCClientContext extends ClientRetryPluginContext {}
 
+const getAPIUrl = createIsomorphicFn()
+  .client(() => `${window.location.origin}/api`)
+  .server(
+    () =>
+      `${configManager.getAtlasConfig()?.baseUrl || "http://localhost:3000"}/api`
+  );
+
 const link = new RPCLink<ORPCClientContext>({
-  url: `${env.VITE_BASE_URL}/api`,
+  url: getAPIUrl(),
   headers: createIsomorphicFn()
     .client(() => ({
       "accept-encoding": "br, gzip, deflate",

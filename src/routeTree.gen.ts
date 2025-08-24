@@ -11,11 +11,17 @@
 import { createServerRootRoute } from "@tanstack/react-start/server";
 
 import { Route as rootRouteImport } from "./routes/__root";
+import { Route as SetupRouteImport } from "./routes/setup";
 import { Route as AdminRouteImport } from "./routes/admin";
 import { Route as MainRouteImport } from "./routes/_main";
 import { Route as AuthRouteImport } from "./routes/_auth";
+import { Route as SetupIndexRouteImport } from "./routes/setup/index";
 import { Route as AdminIndexRouteImport } from "./routes/admin/index";
 import { Route as MainIndexRouteImport } from "./routes/_main/index";
+import { Route as SetupDatabaseRouteImport } from "./routes/setup/database";
+import { Route as SetupBrandingRouteImport } from "./routes/setup/branding";
+import { Route as SetupAuthRouteImport } from "./routes/setup/auth";
+import { Route as SetupAtlasRouteImport } from "./routes/setup/atlas";
 import { Route as AdminAuditLogsRouteImport } from "./routes/admin/audit-logs";
 import { Route as MainActivityRouteImport } from "./routes/_main/activity";
 import { Route as AuthLoginRouteImport } from "./routes/_auth/login";
@@ -43,6 +49,11 @@ import { ServerRoute as ApiAuthSplatServerRouteImport } from "./routes/api/auth/
 
 const rootServerRouteImport = createServerRootRoute();
 
+const SetupRoute = SetupRouteImport.update({
+  id: "/setup",
+  path: "/setup",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const AdminRoute = AdminRouteImport.update({
   id: "/admin",
   path: "/admin",
@@ -56,6 +67,11 @@ const AuthRoute = AuthRouteImport.update({
   id: "/_auth",
   getParentRoute: () => rootRouteImport,
 } as any);
+const SetupIndexRoute = SetupIndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => SetupRoute,
+} as any);
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: "/",
   path: "/",
@@ -65,6 +81,26 @@ const MainIndexRoute = MainIndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => MainRoute,
+} as any);
+const SetupDatabaseRoute = SetupDatabaseRouteImport.update({
+  id: "/database",
+  path: "/database",
+  getParentRoute: () => SetupRoute,
+} as any);
+const SetupBrandingRoute = SetupBrandingRouteImport.update({
+  id: "/branding",
+  path: "/branding",
+  getParentRoute: () => SetupRoute,
+} as any);
+const SetupAuthRoute = SetupAuthRouteImport.update({
+  id: "/auth",
+  path: "/auth",
+  getParentRoute: () => SetupRoute,
+} as any);
+const SetupAtlasRoute = SetupAtlasRouteImport.update({
+  id: "/atlas",
+  path: "/atlas",
+  getParentRoute: () => SetupRoute,
 } as any);
 const AdminAuditLogsRoute = AdminAuditLogsRouteImport.update({
   id: "/audit-logs",
@@ -196,11 +232,17 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 
 export interface FileRoutesByFullPath {
   "/admin": typeof AdminRouteWithChildren;
+  "/setup": typeof SetupRouteWithChildren;
   "/login": typeof AuthLoginRoute;
   "/activity": typeof MainActivityRoute;
   "/admin/audit-logs": typeof AdminAuditLogsRoute;
+  "/setup/atlas": typeof SetupAtlasRoute;
+  "/setup/auth": typeof SetupAuthRoute;
+  "/setup/branding": typeof SetupBrandingRoute;
+  "/setup/database": typeof SetupDatabaseRoute;
   "/": typeof MainIndexRoute;
   "/admin/": typeof AdminIndexRoute;
+  "/setup/": typeof SetupIndexRoute;
   "/groups/$groupId": typeof MainGroupsGroupIdRouteWithChildren;
   "/servers/$serverId": typeof MainServersServerIdRouteWithChildren;
   "/templates/edit": typeof MainTemplatesEditRoute;
@@ -221,8 +263,13 @@ export interface FileRoutesByTo {
   "/login": typeof AuthLoginRoute;
   "/activity": typeof MainActivityRoute;
   "/admin/audit-logs": typeof AdminAuditLogsRoute;
+  "/setup/atlas": typeof SetupAtlasRoute;
+  "/setup/auth": typeof SetupAuthRoute;
+  "/setup/branding": typeof SetupBrandingRoute;
+  "/setup/database": typeof SetupDatabaseRoute;
   "/": typeof MainIndexRoute;
   "/admin": typeof AdminIndexRoute;
+  "/setup": typeof SetupIndexRoute;
   "/templates/edit": typeof MainTemplatesEditRoute;
   "/templates/new": typeof MainTemplatesNewRoute;
   "/groups": typeof MainGroupsIndexRoute;
@@ -242,11 +289,17 @@ export interface FileRoutesById {
   "/_auth": typeof AuthRouteWithChildren;
   "/_main": typeof MainRouteWithChildren;
   "/admin": typeof AdminRouteWithChildren;
+  "/setup": typeof SetupRouteWithChildren;
   "/_auth/login": typeof AuthLoginRoute;
   "/_main/activity": typeof MainActivityRoute;
   "/admin/audit-logs": typeof AdminAuditLogsRoute;
+  "/setup/atlas": typeof SetupAtlasRoute;
+  "/setup/auth": typeof SetupAuthRoute;
+  "/setup/branding": typeof SetupBrandingRoute;
+  "/setup/database": typeof SetupDatabaseRoute;
   "/_main/": typeof MainIndexRoute;
   "/admin/": typeof AdminIndexRoute;
+  "/setup/": typeof SetupIndexRoute;
   "/_main/groups/$groupId": typeof MainGroupsGroupIdRouteWithChildren;
   "/_main/servers/$serverId": typeof MainServersServerIdRouteWithChildren;
   "/_main/templates/edit": typeof MainTemplatesEditRoute;
@@ -267,11 +320,17 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | "/admin"
+    | "/setup"
     | "/login"
     | "/activity"
     | "/admin/audit-logs"
+    | "/setup/atlas"
+    | "/setup/auth"
+    | "/setup/branding"
+    | "/setup/database"
     | "/"
     | "/admin/"
+    | "/setup/"
     | "/groups/$groupId"
     | "/servers/$serverId"
     | "/templates/edit"
@@ -292,8 +351,13 @@ export interface FileRouteTypes {
     | "/login"
     | "/activity"
     | "/admin/audit-logs"
+    | "/setup/atlas"
+    | "/setup/auth"
+    | "/setup/branding"
+    | "/setup/database"
     | "/"
     | "/admin"
+    | "/setup"
     | "/templates/edit"
     | "/templates/new"
     | "/groups"
@@ -312,11 +376,17 @@ export interface FileRouteTypes {
     | "/_auth"
     | "/_main"
     | "/admin"
+    | "/setup"
     | "/_auth/login"
     | "/_main/activity"
     | "/admin/audit-logs"
+    | "/setup/atlas"
+    | "/setup/auth"
+    | "/setup/branding"
+    | "/setup/database"
     | "/_main/"
     | "/admin/"
+    | "/setup/"
     | "/_main/groups/$groupId"
     | "/_main/servers/$serverId"
     | "/_main/templates/edit"
@@ -338,6 +408,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren;
   MainRoute: typeof MainRouteWithChildren;
   AdminRoute: typeof AdminRouteWithChildren;
+  SetupRoute: typeof SetupRouteWithChildren;
 }
 export interface FileServerRoutesByFullPath {
   "/api/$": typeof ApiSplatServerRoute;
@@ -402,6 +473,13 @@ export interface RootServerRouteChildren {
 
 declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
+    "/setup": {
+      id: "/setup";
+      path: "/setup";
+      fullPath: "/setup";
+      preLoaderRoute: typeof SetupRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     "/admin": {
       id: "/admin";
       path: "/admin";
@@ -423,6 +501,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AuthRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/setup/": {
+      id: "/setup/";
+      path: "/";
+      fullPath: "/setup/";
+      preLoaderRoute: typeof SetupIndexRouteImport;
+      parentRoute: typeof SetupRoute;
+    };
     "/admin/": {
       id: "/admin/";
       path: "/";
@@ -436,6 +521,34 @@ declare module "@tanstack/react-router" {
       fullPath: "/";
       preLoaderRoute: typeof MainIndexRouteImport;
       parentRoute: typeof MainRoute;
+    };
+    "/setup/database": {
+      id: "/setup/database";
+      path: "/database";
+      fullPath: "/setup/database";
+      preLoaderRoute: typeof SetupDatabaseRouteImport;
+      parentRoute: typeof SetupRoute;
+    };
+    "/setup/branding": {
+      id: "/setup/branding";
+      path: "/branding";
+      fullPath: "/setup/branding";
+      preLoaderRoute: typeof SetupBrandingRouteImport;
+      parentRoute: typeof SetupRoute;
+    };
+    "/setup/auth": {
+      id: "/setup/auth";
+      path: "/auth";
+      fullPath: "/setup/auth";
+      preLoaderRoute: typeof SetupAuthRouteImport;
+      parentRoute: typeof SetupRoute;
+    };
+    "/setup/atlas": {
+      id: "/setup/atlas";
+      path: "/atlas";
+      fullPath: "/setup/atlas";
+      preLoaderRoute: typeof SetupAtlasRouteImport;
+      parentRoute: typeof SetupRoute;
     };
     "/admin/audit-logs": {
       id: "/admin/audit-logs";
@@ -694,10 +807,29 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren);
 
+interface SetupRouteChildren {
+  SetupAtlasRoute: typeof SetupAtlasRoute;
+  SetupAuthRoute: typeof SetupAuthRoute;
+  SetupBrandingRoute: typeof SetupBrandingRoute;
+  SetupDatabaseRoute: typeof SetupDatabaseRoute;
+  SetupIndexRoute: typeof SetupIndexRoute;
+}
+
+const SetupRouteChildren: SetupRouteChildren = {
+  SetupAtlasRoute: SetupAtlasRoute,
+  SetupAuthRoute: SetupAuthRoute,
+  SetupBrandingRoute: SetupBrandingRoute,
+  SetupDatabaseRoute: SetupDatabaseRoute,
+  SetupIndexRoute: SetupIndexRoute,
+};
+
+const SetupRouteWithChildren = SetupRoute._addFileChildren(SetupRouteChildren);
+
 const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   MainRoute: MainRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
+  SetupRoute: SetupRouteWithChildren,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

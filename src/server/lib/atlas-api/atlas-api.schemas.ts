@@ -1,9 +1,13 @@
 import { z } from "zod";
 
 export const SystemStatusSchema = z.object({
-  status: z.enum(["healthy", "unhealthy"]),
-  uptime: z.number(),
-  timestamp: z.string(),
+  status: z.string(),
+  data: z.object({
+    running: z.boolean(),
+    debugMode: z.boolean(),
+    uptime: z.number(),
+  }),
+  timestamp: z.number(),
 });
 
 export const ServerInfoSchema = z.object({

@@ -3,13 +3,15 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { genericOAuth } from "better-auth/plugins";
 
 import { db } from "@/db";
-import { env } from "@/env";
+import configManager from "@/server/lib/config-manager";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
     usePlural: true,
   }),
+  baseURL: configManager.getAtlasConfig()?.baseUrl!,
+  secret: configManager.getOidcConfig()?.secret!,
   // emailAndPassword: {
   //   enabled: true,
   // },
@@ -24,11 +26,11 @@ export const auth = betterAuth({
       config: [
         {
           providerId: "identity",
-          clientId: env.IDENTITY_CLIENT_ID,
-          clientSecret: env.IDENTITY_CLIENT_SECRET,
-          authorizationUrl: "https://identity.dustydunes.net/authorize",
-          tokenUrl: "https://identity.dustydunes.net/api/oidc/token",
-          userInfoUrl: "https://identity.dustydunes.net/api/oidc/userinfo",
+          clientId: configManager.getOidcConfig()?.clientId!,
+          clientSecret: configManager.getOidcConfig()?.clientSecret!,
+          authorizationUrl: configManager.getOidcConfig()?.authorizationUrl!,
+          tokenUrl: configManager.getOidcConfig()?.tokenUrl!,
+          userInfoUrl: configManager.getOidcConfig()?.userInfoUrl!,
           scopes: ["openid", "profile", "email", "groups"],
         },
       ],

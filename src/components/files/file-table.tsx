@@ -56,204 +56,219 @@ interface FileTableProps {
   isTemplate?: boolean;
 }
 
-export const FileTable = React.memo(({
-  files,
-  isLoading,
-  serverId,
-  currentPath,
-  onNavigateToPath,
-  onEditFile,
-  onRenameFile,
-  onMoveFile,
-  onDeleteFile,
-  onUploadFiles,
-  onUnzipFile,
-  onZipFolder,
-  isTemplate = false,
-}: FileTableProps) => {
-  const navigate = useNavigate();
-  const [isDragOver, setIsDragOver] = useState(false);
+export const FileTable = React.memo(
+  ({
+    files,
+    isLoading,
+    serverId,
+    currentPath,
+    onNavigateToPath,
+    onEditFile,
+    onRenameFile,
+    onMoveFile,
+    onDeleteFile,
+    onUploadFiles,
+    onUnzipFile,
+    onZipFolder,
+    isTemplate = false,
+  }: FileTableProps) => {
+    const navigate = useNavigate();
+    const [isDragOver, setIsDragOver] = useState(false);
 
-  const handleRowClick = useCallback((file: FileItem, e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest("button") || target.closest("input")) return;
+    const handleRowClick = useCallback(
+      (file: FileItem, e: React.MouseEvent) => {
+        const target = e.target as HTMLElement;
+        if (target.closest("button") || target.closest("input")) return;
 
-    if (!file.file && !file.symlink) {
-      if (file.name === "..") {
-        const parentPath = currentPath.split("/").slice(0, -1).join("/") || "/";
-        if (parentPath === "/") {
-          navigate({ to: ".", search: {} });
-        } else {
-          onNavigateToPath(parentPath);
+        if (!file.file && !file.symlink) {
+          if (file.name === "..") {
+            const parentPath =
+              currentPath.split("/").slice(0, -1).join("/") || "/";
+            if (parentPath === "/") {
+              navigate({ to: ".", search: {} });
+            } else {
+              onNavigateToPath(parentPath);
+            }
+          } else {
+            onNavigateToPath(
+              currentPath === "/"
+                ? `/${file.name}`
+                : `${currentPath}/${file.name}`
+            );
+          }
+        } else if (isEditable(file)) {
+          onEditFile(file);
         }
-      } else {
-        onNavigateToPath(
-          currentPath === "/" ? `/${file.name}` : `${currentPath}/${file.name}`
-        );
+      },
+      [currentPath, navigate, onNavigateToPath, onEditFile]
+    );
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Only hide overlay if leaving the container entirely
+      const rect = e.currentTarget.getBoundingClientRect();
+      const isOutside =
+        e.clientX < rect.left ||
+        e.clientX > rect.right ||
+        e.clientY < rect.top ||
+        e.clientY > rect.bottom;
+
+      if (isOutside) {
+        setIsDragOver(false);
       }
-    } else if (isEditable(file)) {
-      onEditFile(file);
-    }
-  }, [currentPath, navigate, onNavigateToPath, onEditFile]);
+    }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(true);
-  }, []);
+    const handleDrop = useCallback(
+      (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Only hide overlay if leaving the container entirely
-    const rect = e.currentTarget.getBoundingClientRect();
-    const isOutside = 
-      e.clientX < rect.left ||
-      e.clientX > rect.right ||
-      e.clientY < rect.top ||
-      e.clientY > rect.bottom;
-    
-    if (isOutside) {
-      setIsDragOver(false);
-    }
-  }, []);
+        const droppedFiles = Array.from(e.dataTransfer.files);
+        if (droppedFiles.length > 0) {
+          onUploadFiles(droppedFiles);
+        }
+      },
+      [onUploadFiles]
+    );
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    if (droppedFiles.length > 0) {
-      onUploadFiles(droppedFiles);
-    }
-  }, [onUploadFiles]);
-
-  return (
-    <div 
-      className={`bg-background overflow-hidden rounded-lg relative ${
-        isDragOver ? "ring-2 ring-primary ring-offset-2" : ""
-      }`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      {isDragOver && (
-        <div className="absolute inset-0 bg-background/90 backdrop-blur-sm border-2 border-dashed border-primary rounded-lg flex items-center justify-center z-10">
-          <div className="text-center">
-            <Upload className="mx-auto h-12 w-12 text-primary mb-2" />
-            <p className="text-lg font-medium text-foreground">Drop files to upload</p>
-            <p className="text-sm text-muted-foreground">Files will be uploaded to the current folder</p>
+    return (
+      <div
+        className={`relative overflow-hidden rounded-lg ${
+          isDragOver ? "ring-primary ring-2 ring-offset-2" : ""
+        }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {isDragOver && (
+          <div className="bg-background/90 border-primary absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed backdrop-blur-sm">
+            <div className="text-center">
+              <Upload className="text-primary mx-auto mb-2 h-12 w-12" />
+              <p className="text-foreground text-lg font-medium">
+                Drop files to upload
+              </p>
+              <p className="text-muted-foreground text-sm">
+                Files will be uploaded to the current folder
+              </p>
+            </div>
           </div>
-        </div>
-      )}
-      <table className="w-full">
-        <thead>
-          <tr className="text-muted-foreground border-b text-sm">
-            <th className="p-3 text-left font-medium">Name</th>
-            <th className="w-24 p-3 text-right font-medium">Size</th>
-            <th className="w-32 p-3 text-right font-medium">Modified</th>
-            <th className="w-10 p-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {isLoading ? (
-            Array.from({ length: 8 }, (_, i) => (
-              <tr key={i} className={`${i < 7 ? "border-b" : ""}`}>
-                <td className="p-3">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-5 w-5" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                </td>
-                <td className="p-3 text-right">
-                  <Skeleton className="ml-auto h-4 w-12" />
-                </td>
-                <td className="p-3 text-right">
-                  <Skeleton className="ml-auto h-4 w-16" />
-                </td>
-                <td className="p-3">
-                  <Skeleton className="h-8 w-8" />
-                </td>
-              </tr>
-            ))
-          ) : files.length === 0 ? (
-            <tr>
-              <td colSpan={4} className="p-12 text-center">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="text-muted-foreground h-12 w-12" />
-                  <div>
-                    <h3 className="text-lg font-medium">
-                      This folder is empty
-                    </h3>
-                    <p className="text-muted-foreground text-sm">
-                      No files or folders to display
-                    </p>
-                  </div>
-                </div>
-              </td>
+        )}
+        <table className="w-full">
+          <thead>
+            <tr className="text-muted-foreground border-b text-sm">
+              <th className="p-3 text-left font-medium">Name</th>
+              <th className="w-24 p-3 text-right font-medium">Size</th>
+              <th className="w-32 p-3 text-right font-medium">Modified</th>
+              <th className="w-10 p-3"></th>
             </tr>
-          ) : (
-            files.map((file, index) => (
-              <tr
-                key={file.name}
-                className={`hover:bg-muted/30 cursor-pointer ${
-                  index < files.length - 1 ? "border-b" : ""
-                }`}
-                onClick={(e) => handleRowClick(file, e)}
-              >
-                <td className="p-3">
-                  <div className="flex items-center gap-3">
-                    {!file.file ? (
-                      <Folder
-                        className={`h-5 w-5 flex-shrink-0 ${
-                          file.name === ".."
-                            ? "text-muted-foreground"
-                            : "text-blue-500"
-                        }`}
-                      />
-                    ) : (
-                      <File className="text-foreground h-5 w-5 flex-shrink-0" />
-                    )}
-                    <span
-                      className={`truncate ${
-                        file.name === ".." ? "text-muted-foreground" : ""
-                      }`}
-                    >
-                      {file.name}
-                    </span>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              Array.from({ length: 8 }, (_, i) => (
+                <tr key={i} className={`${i < 7 ? "border-b" : ""}`}>
+                  <td className="p-3">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-5 w-5" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                  </td>
+                  <td className="p-3 text-right">
+                    <Skeleton className="ml-auto h-4 w-12" />
+                  </td>
+                  <td className="p-3 text-right">
+                    <Skeleton className="ml-auto h-4 w-16" />
+                  </td>
+                  <td className="p-3">
+                    <Skeleton className="h-8 w-8" />
+                  </td>
+                </tr>
+              ))
+            ) : files.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="p-12 text-center">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="text-muted-foreground h-12 w-12" />
+                    <div>
+                      <h3 className="text-lg font-medium">
+                        This folder is empty
+                      </h3>
+                      <p className="text-muted-foreground text-sm">
+                        No files or folders to display
+                      </p>
+                    </div>
                   </div>
                 </td>
-                <td className="text-muted-foreground p-3 text-right text-sm">
-                  {formatFileSize(file.size)}
-                </td>
-                <td className="text-muted-foreground p-3 text-right text-sm">
-                  {formatDate(file.modifiedAt)}
-                </td>
-                <td className="p-3">
-                  {file.name !== ".." && (
-                    <FileActionsDropdown
-                      file={file}
-                      serverId={serverId}
-                      currentPath={currentPath}
-                      onEdit={onEditFile}
-                      onRename={onRenameFile}
-                      onMove={onMoveFile}
-                      onDelete={onDeleteFile}
-                      onUnzip={onUnzipFile}
-                      onZipFolder={onZipFolder}
-                      isTemplate={isTemplate}
-                    />
-                  )}
-                </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-});
+            ) : (
+              files.map((file, index) => (
+                <tr
+                  key={file.name}
+                  className={`hover:bg-muted/30 cursor-pointer ${
+                    index < files.length - 1 ? "border-b" : ""
+                  }`}
+                  onClick={(e) => handleRowClick(file, e)}
+                >
+                  <td className="p-3">
+                    <div className="flex items-center gap-3">
+                      {!file.file ? (
+                        <Folder
+                          className={`h-5 w-5 flex-shrink-0 ${
+                            file.name === ".."
+                              ? "text-muted-foreground"
+                              : "text-blue-500"
+                          }`}
+                        />
+                      ) : (
+                        <File className="text-foreground h-5 w-5 flex-shrink-0" />
+                      )}
+                      <span
+                        className={`truncate ${
+                          file.name === ".." ? "text-muted-foreground" : ""
+                        }`}
+                      >
+                        {file.name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="text-muted-foreground p-3 text-right text-sm">
+                    {formatFileSize(file.size)}
+                  </td>
+                  <td className="text-muted-foreground p-3 text-right text-sm">
+                    {formatDate(file.modifiedAt)}
+                  </td>
+                  <td className="p-3">
+                    {file.name !== ".." && (
+                      <FileActionsDropdown
+                        file={file}
+                        serverId={serverId}
+                        currentPath={currentPath}
+                        onEdit={onEditFile}
+                        onRename={onRenameFile}
+                        onMove={onMoveFile}
+                        onDelete={onDeleteFile}
+                        onUnzip={onUnzipFile}
+                        onZipFolder={onZipFolder}
+                        isTemplate={isTemplate}
+                      />
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+);
 
 FileTable.displayName = "FileTable";

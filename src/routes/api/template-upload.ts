@@ -1,10 +1,13 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
 
 import atlas from "@/server/lib/atlas-api/atlas-api.client";
-import { auth } from "@/server/lib/auth";
 import { AuditService } from "@/server/lib/audit";
+import { auth } from "@/server/lib/auth";
+import configManager from "@/server/lib/config-manager";
 
-export const ServerRoute = createServerFileRoute("/api/template-upload").methods({
+export const ServerRoute = createServerFileRoute(
+  "/api/template-upload"
+).methods({
   POST: async ({ request }) => {
     // Check authentication
     const session = await auth.api.getSession({
@@ -27,14 +30,14 @@ export const ServerRoute = createServerFileRoute("/api/template-upload").methods
       // Proxy to Atlas API template upload endpoint
       const atlasClient = atlas as any;
       const encodedPath = encodeURIComponent(path);
-      const atlasUrl = `${atlasClient.baseUrl || process.env.ATLAS_API_URL || "http://localhost:9090"}/api/v1/templates/files/upload?path=${encodedPath}`;
-      
+      const atlasUrl = `${atlasClient.baseUrl || configManager.getAtlasConfig()?.baseUrl || "http://localhost:9090"}/api/v1/templates/files/upload?path=${encodedPath}`;
+
       // Stream directly to Atlas without buffering
       const response = await fetch(atlasUrl, {
         method: "POST",
         body: request.body,
         headers: {
-          Authorization: `Bearer ${process.env.ATLAS_API_KEY}`,
+          Authorization: `Bearer ${configManager.getAtlasConfig()?.atlasApiKey}`,
           "Content-Type": "application/octet-stream",
         },
         // @ts-ignore - duplex is needed for streaming
@@ -57,7 +60,7 @@ export const ServerRoute = createServerFileRoute("/api/template-upload").methods
         restorePossible: false,
         success: true,
       });
-      
+
       return new Response(JSON.stringify(result), {
         status: 200,
         headers: {
@@ -75,7 +78,8 @@ export const ServerRoute = createServerFileRoute("/api/template-upload").methods
         details: { path },
         restorePossible: false,
         success: false,
-        errorMessage: error instanceof Error ? error.message : "Template upload failed",
+        errorMessage:
+          error instanceof Error ? error.message : "Template upload failed",
       });
 
       return new Response(

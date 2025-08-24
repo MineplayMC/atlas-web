@@ -1,4 +1,6 @@
-import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+
+import { setupStatusQueryOptions } from "@/hooks/queries/use-setup-status-query";
 
 const RouteComponent = () => {
   return (
@@ -13,5 +15,11 @@ const RouteComponent = () => {
 };
 
 export const Route = createFileRoute("/_auth")({
+  loader: async ({ context }) => {
+    const setupStatus = await context.queryClient.ensureQueryData(setupStatusQueryOptions());
+    if (!setupStatus.isCompleted) {
+      return redirect({ to: "/setup" });
+    }
+  },
   component: RouteComponent,
 });

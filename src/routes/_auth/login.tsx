@@ -3,10 +3,12 @@ import { useState } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { toast } from "sonner";
 
+import { useSetupStatus } from "@/hooks/use-setup-status";
 import { authClient } from "@/lib/auth-client";
 
 const RouteComponent = () => {
   const [isIdentityLoading, setIsIdentityLoading] = useState(false);
+  const config = useSetupStatus();
 
   const handleIdentitySignIn = async () => {
     try {
@@ -17,7 +19,9 @@ const RouteComponent = () => {
       });
     } catch (error) {
       console.error(error, "Error during Identity sign in");
-      toast.error("An error occurred while signing in with Identity");
+      toast.error(
+        `An error occurred while signing in with ${config.config?.oidcConfig.providerName}`
+      );
     } finally {
       setIsIdentityLoading(false);
     }
@@ -26,10 +30,17 @@ const RouteComponent = () => {
   return (
     <div className="bg-card mx-auto max-w-lg rounded-lg p-12 shadow-lg">
       <div className="mb-12 text-center">
-        <img src="/logo.png" alt="Atlas" className="mx-auto mb-6 h-20 w-20" />
-        <h1 className="mb-4 text-3xl font-bold">Welcome to Atlas</h1>
+        <img
+          src="/logo.png"
+          alt={config.config?.brandingConfig?.displayName || "Atlas"}
+          className="mx-auto mb-6 h-20 w-20"
+        />
+        <h1 className="mb-4 text-3xl font-bold">
+          Welcome to {config.config?.brandingConfig?.displayName || "Atlas"}
+        </h1>
         <p className="text-muted-foreground">
-          Sign in with your Dusty Identity account to get started
+          Sign in with your {config.config?.oidcConfig.providerName} account to
+          get started
         </p>
       </div>
 
@@ -43,7 +54,7 @@ const RouteComponent = () => {
             <span className="text-sm">
               {isIdentityLoading
                 ? "Signing in..."
-                : "Sign in with Dusty Identity"}
+                : `Sign in with ${config.config?.oidcConfig.providerName}`}
             </span>
           </button>
         </div>

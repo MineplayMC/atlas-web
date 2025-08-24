@@ -1,0 +1,33 @@
+{
+  "postgresConfig": {
+    "host": "localhost",
+    "port": 5432,
+    "database": "atlas",
+    "username": "atlas",
+    "password": "password"
+  },
+  "oidcConfig": {
+    "provider": "custom",
+    "providerName": "Dusty Identity",
+    "clientId": "fd13219f-bcbf-4be4-a18e-dcaf2e935635",
+    "clientSecret": "C40QU2dYA80bwsy2WmnsG3zswAXYMCmC",
+    "authorizationUrl": "https://identity.dustydunes.net/authorize",
+    "tokenUrl": "https://identity.dustydunes.net/api/oidc/token",
+    "userInfoUrl": "https://identity.dustydunes.net/api/oidc/userinfo",
+    "secret": "nBXjI0ZLAtlH4eCdXVMpoM0IeKVOrvJ1"
+  },
+  "atlasConfig": {
+    "baseUrl": "http://localhost:3000",
+    "atlasUrl": "https://atlas.dustydunes.net",
+    "atlasApiKey": "7D492725D37EC9B377CF9AC587762",
+    "websocketUrl": "wss://atlas.dustydunes.net"
+  },
+  "brandingConfig": {
+    "displayName": "Atlas",
+    "logo": "https://cdn.twarix.com/logo/white.png",
+    "primaryColor": "#FF6A3D",
+    "backgroundImage": "https://cdn.twarix.com/background.jpg"
+  },
+  "completedAt": "2025-08-24T18:47:59.765Z",
+  "version": "1.0.0"
+}

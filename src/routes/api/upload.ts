@@ -1,8 +1,9 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
 
 import atlas from "@/server/lib/atlas-api/atlas-api.client";
-import { auth } from "@/server/lib/auth";
 import { AuditService } from "@/server/lib/audit";
+import { auth } from "@/server/lib/auth";
+import configManager from "@/server/lib/config-manager";
 
 export const ServerRoute = createServerFileRoute("/api/upload").methods({
   POST: async ({ request }) => {
@@ -21,7 +22,9 @@ export const ServerRoute = createServerFileRoute("/api/upload").methods({
     const path = url.searchParams.get("path");
 
     if (!serverId || !path) {
-      return new Response("Missing serverId or path parameters", { status: 400 });
+      return new Response("Missing serverId or path parameters", {
+        status: 400,
+      });
     }
 
     try {
@@ -29,14 +32,14 @@ export const ServerRoute = createServerFileRoute("/api/upload").methods({
       // We'll implement proper streaming in a future iteration
       const atlasClient = atlas as any;
       const encodedPath = encodeURIComponent(path);
-      const url = `${atlasClient.baseUrl || process.env.ATLAS_API_URL || "http://localhost:9090"}/api/v1/servers/${serverId}/files/upload?path=${encodedPath}`;
-      
+      const url = `${atlasClient.baseUrl || configManager.getAtlasConfig()?.baseUrl || "http://localhost:9090"}/api/v1/servers/${serverId}/files/upload?path=${encodedPath}`;
+
       // Stream directly to Atlas without buffering
       const response = await fetch(url, {
         method: "POST",
         body: request.body,
         headers: {
-          Authorization: `Bearer ${process.env.ATLAS_API_KEY}`,
+          Authorization: `Bearer ${configManager.getAtlasConfig()?.atlasApiKey}`,
           "Content-Type": "application/octet-stream",
         },
         // @ts-ignore - duplex is needed for streaming
@@ -59,7 +62,7 @@ export const ServerRoute = createServerFileRoute("/api/upload").methods({
         restorePossible: false,
         success: true,
       });
-      
+
       return new Response(JSON.stringify(result), {
         status: 200,
         headers: {

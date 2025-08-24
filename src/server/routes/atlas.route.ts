@@ -1,18 +1,18 @@
 import { ORPCError, os } from "@orpc/server";
 import { getWebRequest } from "@tanstack/react-start/server";
+import { and, count, desc, eq, like, or, sql } from "drizzle-orm";
 import { z } from "zod";
-import { eq, desc, and, like, or, count, sql } from "drizzle-orm";
 
-import { env } from "@/env";
 import { db } from "@/db";
 import { auditLogs, users } from "@/db/schema";
 import atlas from "@/server/lib/atlas-api/atlas-api.client";
-import { auth } from "@/server/lib/auth";
-import { AuditService } from "@/server/lib/audit";
 import {
   UnzipFileRequestSchema,
   ZipFilesRequestSchema,
 } from "@/server/lib/atlas-api/atlas-api.schemas";
+import { AuditService } from "@/server/lib/audit";
+import { auth } from "@/server/lib/auth";
+import configManager from "@/server/lib/config-manager";
 
 const serverListInputSchema = z.object({
   group: z.string().optional(),
@@ -118,7 +118,6 @@ const scale = os
         direction: input.direction,
       });
 
-      // Log successful operation (not restorable)
       await AuditService.logAction({
         action: "scale",
         resourceType: "group",
@@ -130,7 +129,6 @@ const scale = os
 
       return group.data;
     } catch (error) {
-      // Log failed operation
       await AuditService.logAction({
         action: "scale",
         resourceType: "group",
@@ -204,7 +202,6 @@ const startServer = os
     try {
       const result = await atlas.startServer(input.server);
 
-      // Log successful operation
       await AuditService.logAction({
         action: "startServer",
         resourceType: "server",
@@ -215,7 +212,6 @@ const startServer = os
 
       return result.data;
     } catch (error) {
-      // Log failed operation
       await AuditService.logAction({
         action: "startServer",
         resourceType: "server",
@@ -243,7 +239,6 @@ const stopServer = os
     try {
       const result = await atlas.stopServer(input.server);
 
-      // Log successful operation
       await AuditService.logAction({
         action: "stopServer",
         resourceType: "server",
@@ -254,7 +249,6 @@ const stopServer = os
 
       return result.data;
     } catch (error) {
-      // Log failed operation
       await AuditService.logAction({
         action: "stopServer",
         resourceType: "server",
@@ -282,7 +276,6 @@ const restartServer = os
     try {
       const result = await atlas.restartServer(input.server);
 
-      // Log successful operation
       await AuditService.logAction({
         action: "restartServer",
         resourceType: "server",
@@ -293,7 +286,6 @@ const restartServer = os
 
       return result.data;
     } catch (error) {
-      // Log failed operation
       await AuditService.logAction({
         action: "restartServer",
         resourceType: "server",
@@ -340,7 +332,6 @@ const getServerFileContents = os
         input.file
       );
 
-      // Log successful file read (not restorable)
       await AuditService.logAction({
         action: "getServerFileContents",
         resourceType: "server",
@@ -352,7 +343,6 @@ const getServerFileContents = os
 
       return fileContents;
     } catch (error) {
-      // Log failed operation
       await AuditService.logAction({
         action: "getServerFileContents",
         resourceType: "server",
@@ -380,7 +370,6 @@ const writeServerFileContents = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
-    // Capture backup before modifying
     const backupData = await AuditService.captureFileBackup(
       "writeServerFileContents",
       input.server,
@@ -394,7 +383,6 @@ const writeServerFileContents = os
         input.content
       );
 
-      // Log successful operation
       await AuditService.logAction({
         action: "writeServerFileContents",
         resourceType: "server",
@@ -406,7 +394,6 @@ const writeServerFileContents = os
 
       return result;
     } catch (error) {
-      // Log failed operation
       await AuditService.logAction({
         action: "writeServerFileContents",
         resourceType: "server",
@@ -432,7 +419,6 @@ const deleteServerFile = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
-    // Capture backup before deleting
     const backupData = await AuditService.captureFileBackup(
       "deleteServerFile",
       input.server,
@@ -442,7 +428,6 @@ const deleteServerFile = os
     try {
       const result = await atlas.deleteServerFile(input.server, input.file);
 
-      // Log successful operation
       await AuditService.logAction({
         action: "deleteServerFile",
         resourceType: "server",
@@ -454,7 +439,6 @@ const deleteServerFile = os
 
       return result;
     } catch (error) {
-      // Log failed operation
       await AuditService.logAction({
         action: "deleteServerFile",
         resourceType: "server",
@@ -488,7 +472,6 @@ const renameServerFile = os
         newPath: input.newPath,
       });
 
-      // Log successful operation
       await AuditService.logAction({
         action: "renameServerFile",
         resourceType: "server",
@@ -500,7 +483,6 @@ const renameServerFile = os
 
       return result;
     } catch (error) {
-      // Log failed operation
       await AuditService.logAction({
         action: "renameServerFile",
         resourceType: "server",
@@ -632,7 +614,7 @@ const getWebSocketToken = os
     return {
       token: tokenResponse.data.token,
       expiresAt: tokenResponse.data.expiresAt,
-      wsUrl: `${env.ATLAS_API_URL.replace(/^http/, "ws")}/api/v1/servers/${input.server}/ws`,
+      wsUrl: `${configManager.getAtlasConfig()?.baseUrl!.replace(/^http/, "ws")}/api/v1/servers/${input.server}/ws`,
     };
   });
 
@@ -756,7 +738,7 @@ const getTemplateFileContents = os
 
     try {
       const fileContents = await atlas.getTemplateFileContents(input.file);
-      
+
       await AuditService.logAction({
         action: "getTemplateFileContents",
         resourceType: "template",
@@ -765,7 +747,7 @@ const getTemplateFileContents = os
         restorePossible: false,
         success: true,
       });
-      
+
       return fileContents;
     } catch (error) {
       await AuditService.logAction({
@@ -799,8 +781,11 @@ const writeTemplateFileContents = os
     );
 
     try {
-      const result = await atlas.writeTemplateFileContents(input.file, input.content);
-      
+      const result = await atlas.writeTemplateFileContents(
+        input.file,
+        input.content
+      );
+
       await AuditService.logAction({
         action: "writeTemplateFileContents",
         resourceType: "template",
@@ -809,7 +794,7 @@ const writeTemplateFileContents = os
         backupData,
         success: true,
       });
-      
+
       return result;
     } catch (error) {
       await AuditService.logAction({
@@ -844,7 +829,7 @@ const deleteTemplateFile = os
 
     try {
       const result = await atlas.deleteTemplateFile(input.file);
-      
+
       await AuditService.logAction({
         action: "deleteTemplateFile",
         resourceType: "template",
@@ -853,7 +838,7 @@ const deleteTemplateFile = os
         backupData,
         success: true,
       });
-      
+
       return result;
     } catch (error) {
       await AuditService.logAction({
@@ -883,7 +868,7 @@ const renameTemplateFile = os
 
     try {
       const result = await atlas.renameTemplateFile(input);
-      
+
       await AuditService.logAction({
         action: "renameTemplateFile",
         resourceType: "template",
@@ -892,7 +877,7 @@ const renameTemplateFile = os
         backupData: { originalPath: input.oldPath },
         success: true,
       });
-      
+
       return result;
     } catch (error) {
       await AuditService.logAction({
@@ -922,7 +907,7 @@ const createTemplateFolder = os
 
     try {
       const result = await atlas.createTemplateFolder(input.path);
-      
+
       await AuditService.logAction({
         action: "createTemplateFolder",
         resourceType: "template",
@@ -930,7 +915,7 @@ const createTemplateFolder = os
         details: input,
         success: true,
       });
-      
+
       return result;
     } catch (error) {
       await AuditService.logAction({
@@ -944,7 +929,6 @@ const createTemplateFolder = os
       throw error;
     }
   });
-
 
 const downloadTemplateFile = os
   .input(z.object({ file: z.string() }))
@@ -996,12 +980,14 @@ const unzipTemplateFile = os
 
 // Audit and Restore Endpoints
 const getAuditHistory = os
-  .input(z.object({ 
-    resourceType: z.enum(["server", "group", "template", "file"]),
-    resourceId: z.string(),
-    limit: z.number().min(1).max(100).default(50),
-    offset: z.number().min(0).default(0),
-  }))
+  .input(
+    z.object({
+      resourceType: z.enum(["server", "group", "template", "file"]),
+      resourceId: z.string(),
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().min(0).default(0),
+    })
+  )
   .handler(async ({ input }) => {
     const request = getWebRequest();
     const session = await auth.api.getSession({
@@ -1012,17 +998,21 @@ const getAuditHistory = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
-    const logs = await db.select().from(auditLogs)
-      .where(and(
-        eq(auditLogs.resourceType, input.resourceType),
-        eq(auditLogs.resourceId, input.resourceId)
-      ))
+    const logs = await db
+      .select()
+      .from(auditLogs)
+      .where(
+        and(
+          eq(auditLogs.resourceType, input.resourceType),
+          eq(auditLogs.resourceId, input.resourceId)
+        )
+      )
       .orderBy(desc(auditLogs.timestamp))
       .limit(input.limit)
       .offset(input.offset);
 
     return {
-      logs: logs.map(log => ({
+      logs: logs.map((log) => ({
         ...log,
         details: JSON.parse(log.details),
         backupData: log.backupData ? JSON.parse(log.backupData) : null,
@@ -1032,11 +1022,13 @@ const getAuditHistory = os
   });
 
 const getRestorableActions = os
-  .input(z.object({ 
-    resourceType: z.enum(["server", "group", "template", "file"]),
-    resourceId: z.string(),
-    limit: z.number().min(1).max(50).default(20),
-  }))
+  .input(
+    z.object({
+      resourceType: z.enum(["server", "group", "template", "file"]),
+      resourceId: z.string(),
+      limit: z.number().min(1).max(50).default(20),
+    })
+  )
   .handler(async ({ input }) => {
     const request = getWebRequest();
     const session = await auth.api.getSession({
@@ -1047,17 +1039,21 @@ const getRestorableActions = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
-    const logs = await db.select().from(auditLogs)
-      .where(and(
-        eq(auditLogs.resourceType, input.resourceType),
-        eq(auditLogs.resourceId, input.resourceId),
-        eq(auditLogs.restorePossible, true),
-        eq(auditLogs.success, true)
-      ))
+    const logs = await db
+      .select()
+      .from(auditLogs)
+      .where(
+        and(
+          eq(auditLogs.resourceType, input.resourceType),
+          eq(auditLogs.resourceId, input.resourceId),
+          eq(auditLogs.restorePossible, true),
+          eq(auditLogs.success, true)
+        )
+      )
       .orderBy(desc(auditLogs.timestamp))
       .limit(input.limit);
 
-    return logs.map(log => ({
+    return logs.map((log) => ({
       ...log,
       details: JSON.parse(log.details),
       backupData: log.backupData ? JSON.parse(log.backupData) : null,
@@ -1077,7 +1073,7 @@ const restoreAction = os
     }
 
     const result = await AuditService.restoreAction(input.auditLogId);
-    
+
     if (!result.success) {
       throw new ORPCError("BAD_REQUEST", { message: result.message });
     }
@@ -1086,14 +1082,16 @@ const restoreAction = os
   });
 
 const getServerAuditHistory = os
-  .input(z.object({ 
-    serverId: z.string().optional(),
-    serverName: z.string().optional(),
-    limit: z.number().min(1).max(100).default(50),
-    offset: z.number().min(0).default(0),
-    search: z.string().optional(),
-    actionType: z.string().optional(),
-  }))
+  .input(
+    z.object({
+      serverId: z.string().optional(),
+      serverName: z.string().optional(),
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().min(0).default(0),
+      search: z.string().optional(),
+      actionType: z.string().optional(),
+    })
+  )
   .handler(async ({ input }) => {
     const request = getWebRequest();
     const session = await auth.api.getSession({
@@ -1106,7 +1104,7 @@ const getServerAuditHistory = os
 
     // Build where conditions based on input
     const whereConditions: any[] = [];
-    
+
     if (input.serverId && input.serverName) {
       // Both ID and name provided - search for either
       whereConditions.push(
@@ -1120,10 +1118,10 @@ const getServerAuditHistory = os
     } else if (input.serverName) {
       whereConditions.push(eq(auditLogs.resourceId, input.serverName));
     }
-    
+
     // Add resource type filter (only server actions)
     whereConditions.push(eq(auditLogs.resourceType, "server"));
-    
+
     // Add search filter if provided
     if (input.search) {
       whereConditions.push(
@@ -1133,44 +1131,46 @@ const getServerAuditHistory = os
         )
       );
     }
-    
+
     // Add action type filter if provided
     if (input.actionType) {
       whereConditions.push(like(auditLogs.action, `%${input.actionType}%`));
     }
-    
+
     const [logs, totalResult] = await Promise.all([
-      db.select({
-        id: auditLogs.id,
-        userId: auditLogs.userId,
-        action: auditLogs.action,
-        resourceType: auditLogs.resourceType,
-        resourceId: auditLogs.resourceId,
-        details: auditLogs.details,
-        backupData: auditLogs.backupData,
-        restorePossible: auditLogs.restorePossible,
-        restoredAt: auditLogs.restoredAt,
-        restoredBy: auditLogs.restoredBy,
-        timestamp: auditLogs.timestamp,
-        success: auditLogs.success,
-        errorMessage: auditLogs.errorMessage,
-        userName: users.name,
-        userEmail: users.email,
-      })
-      .from(auditLogs)
-      .leftJoin(users, eq(auditLogs.userId, users.id))
-      .where(and(...whereConditions))
-      .orderBy(desc(auditLogs.timestamp))
-      .limit(input.limit)
-      .offset(input.offset),
-      
-      db.select({ count: sql<number>`count(*)` })
+      db
+        .select({
+          id: auditLogs.id,
+          userId: auditLogs.userId,
+          action: auditLogs.action,
+          resourceType: auditLogs.resourceType,
+          resourceId: auditLogs.resourceId,
+          details: auditLogs.details,
+          backupData: auditLogs.backupData,
+          restorePossible: auditLogs.restorePossible,
+          restoredAt: auditLogs.restoredAt,
+          restoredBy: auditLogs.restoredBy,
+          timestamp: auditLogs.timestamp,
+          success: auditLogs.success,
+          errorMessage: auditLogs.errorMessage,
+          userName: users.name,
+          userEmail: users.email,
+        })
         .from(auditLogs)
+        .leftJoin(users, eq(auditLogs.userId, users.id))
         .where(and(...whereConditions))
+        .orderBy(desc(auditLogs.timestamp))
+        .limit(input.limit)
+        .offset(input.offset),
+
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(auditLogs)
+        .where(and(...whereConditions)),
     ]);
 
     return {
-      logs: logs.map(log => ({
+      logs: logs.map((log) => ({
         ...log,
         details: JSON.parse(log.details),
         backupData: log.backupData ? JSON.parse(log.backupData) : null,
@@ -1180,13 +1180,15 @@ const getServerAuditHistory = os
   });
 
 const getGroupAuditHistory = os
-  .input(z.object({ 
-    groupId: z.string(),
-    limit: z.number().min(1).max(100).default(50),
-    offset: z.number().min(0).default(0),
-    search: z.string().optional(),
-    actionType: z.string().optional(),
-  }))
+  .input(
+    z.object({
+      groupId: z.string(),
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().min(0).default(0),
+      search: z.string().optional(),
+      actionType: z.string().optional(),
+    })
+  )
   .handler(async ({ input }) => {
     const request = getWebRequest();
     const session = await auth.api.getSession({
@@ -1199,9 +1201,9 @@ const getGroupAuditHistory = os
 
     const whereConditions: any[] = [
       eq(auditLogs.resourceType, "group"),
-      eq(auditLogs.resourceId, input.groupId)
+      eq(auditLogs.resourceId, input.groupId),
     ];
-    
+
     if (input.search) {
       whereConditions.push(
         or(
@@ -1210,43 +1212,45 @@ const getGroupAuditHistory = os
         )
       );
     }
-    
+
     if (input.actionType) {
       whereConditions.push(like(auditLogs.action, `%${input.actionType}%`));
     }
-    
+
     const [logs, totalResult] = await Promise.all([
-      db.select({
-        id: auditLogs.id,
-        userId: auditLogs.userId,
-        action: auditLogs.action,
-        resourceType: auditLogs.resourceType,
-        resourceId: auditLogs.resourceId,
-        details: auditLogs.details,
-        backupData: auditLogs.backupData,
-        restorePossible: auditLogs.restorePossible,
-        restoredAt: auditLogs.restoredAt,
-        restoredBy: auditLogs.restoredBy,
-        timestamp: auditLogs.timestamp,
-        success: auditLogs.success,
-        errorMessage: auditLogs.errorMessage,
-        userName: users.name,
-        userEmail: users.email,
-      })
-      .from(auditLogs)
-      .leftJoin(users, eq(auditLogs.userId, users.id))
-      .where(and(...whereConditions))
-      .orderBy(desc(auditLogs.timestamp))
-      .limit(input.limit)
-      .offset(input.offset),
-      
-      db.select({ count: sql<number>`count(*)` })
+      db
+        .select({
+          id: auditLogs.id,
+          userId: auditLogs.userId,
+          action: auditLogs.action,
+          resourceType: auditLogs.resourceType,
+          resourceId: auditLogs.resourceId,
+          details: auditLogs.details,
+          backupData: auditLogs.backupData,
+          restorePossible: auditLogs.restorePossible,
+          restoredAt: auditLogs.restoredAt,
+          restoredBy: auditLogs.restoredBy,
+          timestamp: auditLogs.timestamp,
+          success: auditLogs.success,
+          errorMessage: auditLogs.errorMessage,
+          userName: users.name,
+          userEmail: users.email,
+        })
         .from(auditLogs)
+        .leftJoin(users, eq(auditLogs.userId, users.id))
         .where(and(...whereConditions))
+        .orderBy(desc(auditLogs.timestamp))
+        .limit(input.limit)
+        .offset(input.offset),
+
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(auditLogs)
+        .where(and(...whereConditions)),
     ]);
 
     return {
-      logs: logs.map(log => ({
+      logs: logs.map((log) => ({
         ...log,
         details: JSON.parse(log.details),
         backupData: log.backupData ? JSON.parse(log.backupData) : null,
@@ -1256,13 +1260,15 @@ const getGroupAuditHistory = os
   });
 
 const getAllAuditLogs = os
-  .input(z.object({ 
-    limit: z.number().min(1).max(200).default(50),
-    offset: z.number().min(0).default(0),
-    resourceType: z.enum(["server", "group", "template", "file"]).optional(),
-    search: z.string().optional(),
-    actionType: z.enum(["create", "read", "update", "delete"]).optional(),
-  }))
+  .input(
+    z.object({
+      limit: z.number().min(1).max(200).default(50),
+      offset: z.number().min(0).default(0),
+      resourceType: z.enum(["server", "group", "template", "file"]).optional(),
+      search: z.string().optional(),
+      actionType: z.enum(["create", "read", "update", "delete"]).optional(),
+    })
+  )
   .handler(async ({ input }) => {
     const request = getWebRequest();
     const session = await auth.api.getSession({
@@ -1275,7 +1281,7 @@ const getAllAuditLogs = os
 
     // Build query conditions
     const whereConditions: any[] = [];
-    
+
     if (input.resourceType) {
       whereConditions.push(eq(auditLogs.resourceType, input.resourceType));
     }
@@ -1299,44 +1305,48 @@ const getAllAuditLogs = os
         update: ["write%", "rename%", "move%", "restart%", "scale%"],
         delete: ["delete%", "stop%"],
       };
-      
+
       const patterns = actionPatterns[input.actionType] || [];
       if (patterns.length > 0) {
         whereConditions.push(
-          or(...patterns.map(pattern => like(auditLogs.action, pattern)))
+          or(...patterns.map((pattern) => like(auditLogs.action, pattern)))
         );
       }
     }
 
-    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+    const whereClause =
+      whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
     // Get total count for pagination
-    const totalResult = await db.select({ count: count() }).from(auditLogs)
+    const totalResult = await db
+      .select({ count: count() })
+      .from(auditLogs)
       .where(whereClause);
     const total = totalResult[0]?.count || 0;
 
     // Get logs with user information
-    const logs = await db.select({
-      // Audit log fields
-      id: auditLogs.id,
-      userId: auditLogs.userId,
-      action: auditLogs.action,
-      resourceType: auditLogs.resourceType,
-      resourceId: auditLogs.resourceId,
-      details: auditLogs.details,
-      backupData: auditLogs.backupData,
-      restorePossible: auditLogs.restorePossible,
-      restoredAt: auditLogs.restoredAt,
-      restoredBy: auditLogs.restoredBy,
-      ipAddress: auditLogs.ipAddress,
-      userAgent: auditLogs.userAgent,
-      timestamp: auditLogs.timestamp,
-      success: auditLogs.success,
-      errorMessage: auditLogs.errorMessage,
-      // User fields
-      userName: users.name,
-      userEmail: users.email,
-    })
+    const logs = await db
+      .select({
+        // Audit log fields
+        id: auditLogs.id,
+        userId: auditLogs.userId,
+        action: auditLogs.action,
+        resourceType: auditLogs.resourceType,
+        resourceId: auditLogs.resourceId,
+        details: auditLogs.details,
+        backupData: auditLogs.backupData,
+        restorePossible: auditLogs.restorePossible,
+        restoredAt: auditLogs.restoredAt,
+        restoredBy: auditLogs.restoredBy,
+        ipAddress: auditLogs.ipAddress,
+        userAgent: auditLogs.userAgent,
+        timestamp: auditLogs.timestamp,
+        success: auditLogs.success,
+        errorMessage: auditLogs.errorMessage,
+        // User fields
+        userName: users.name,
+        userEmail: users.email,
+      })
       .from(auditLogs)
       .leftJoin(users, eq(auditLogs.userId, users.id))
       .where(whereClause)
@@ -1345,7 +1355,7 @@ const getAllAuditLogs = os
       .offset(input.offset);
 
     return {
-      logs: logs.map(log => ({
+      logs: logs.map((log) => ({
         ...log,
         details: JSON.parse(log.details),
         backupData: log.backupData ? JSON.parse(log.backupData) : null,

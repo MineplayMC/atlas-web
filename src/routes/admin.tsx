@@ -2,10 +2,13 @@ import {
   Link,
   Outlet,
   createFileRoute,
+  redirect,
   useLocation,
 } from "@tanstack/react-router";
 import { BarChart3, FileText, Shield, Users } from "lucide-react";
 
+import { setupStatusQueryOptions } from "@/hooks/queries/use-setup-status-query";
+import { useSetupStatus } from "@/hooks/use-setup-status";
 import { cn } from "@/lib/utils";
 
 const adminNavItems = [
@@ -28,15 +31,17 @@ const adminNavItems = [
 
 const RouteComponent = () => {
   const location = useLocation();
+  const config = useSetupStatus();
 
   return (
     <div className="bg-background flex min-h-screen">
-      {/* Sidebar */}
       <div className="bg-card/50 w-64 border-r backdrop-blur-sm">
         <Link to="/" className="flex h-16 items-center border-b px-6">
           <div className="flex items-center gap-2">
             <Shield className="text-primary h-6 w-6" />
-            <h1 className="text-lg font-semibold">Atlas Admin</h1>
+            <h1 className="text-lg font-semibold">
+              {config.config?.brandingConfig?.displayName || "Atlas"} Admin
+            </h1>
           </div>
         </Link>
 
@@ -96,5 +101,17 @@ const RouteComponent = () => {
 };
 
 export const Route = createFileRoute("/admin")({
+  loader: async ({ context }) => {
+    if (!context.auth.isAuthenticated) {
+      return redirect({ to: "/login" });
+    }
+
+    const setupStatus = await context.queryClient.ensureQueryData(
+      setupStatusQueryOptions()
+    );
+    if (!setupStatus.isCompleted) {
+      return redirect({ to: "/setup" });
+    }
+  },
   component: RouteComponent,
 });

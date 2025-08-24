@@ -2,6 +2,7 @@ import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
 import BottomTabbar from "@/components/bottom-tabbar";
 import Header from "@/components/header";
+import { setupStatusQueryOptions } from "@/hooks/queries/use-setup-status-query";
 
 const RouteComponent = () => {
   return (
@@ -16,14 +17,21 @@ const RouteComponent = () => {
           </div>
         </div>
       </div>
-      
+
       <BottomTabbar />
     </div>
   );
 };
 
 export const Route = createFileRoute("/_main")({
-  loader: ({ context }) => {
+  loader: async ({ context }) => {
+    const setupStatus = await context.queryClient.ensureQueryData(
+      setupStatusQueryOptions()
+    );
+    if (!setupStatus.isCompleted) {
+      return redirect({ to: "/setup" });
+    }
+
     if (!context.auth.isAuthenticated) {
       return redirect({ to: "/login" });
     }

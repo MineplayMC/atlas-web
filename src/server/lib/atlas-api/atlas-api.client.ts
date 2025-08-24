@@ -1,4 +1,4 @@
-import { env } from "@/env";
+import configManager from "@/server/lib/config-manager";
 
 import {
   type ActivitiesResponse,
@@ -71,8 +71,8 @@ export class AtlasApiClient {
   private apiKey: string;
 
   constructor(baseUrl?: string, apiKey?: string) {
-    this.baseUrl = baseUrl || env.ATLAS_API_URL;
-    this.apiKey = apiKey || env.ATLAS_API_KEY;
+    this.baseUrl = baseUrl || configManager.getAtlasConfig()?.atlasUrl!;
+    this.apiKey = apiKey || configManager.getAtlasConfig()?.atlasApiKey!;
 
     if (!this.apiKey) {
       throw new Error(
@@ -260,7 +260,10 @@ export class AtlasApiClient {
     return this.request("/api/v1/servers/count", {}, ServerCountResponseSchema);
   }
 
-  async getServerLogs(id: string, lines: number = 100): Promise<ServerLogsResponse> {
+  async getServerLogs(
+    id: string,
+    lines: number = 100
+  ): Promise<ServerLogsResponse> {
     return this.request(
       `/api/v1/servers/${id}/logs?lines=${lines}`,
       {},
@@ -394,12 +397,14 @@ export class AtlasApiClient {
         }
       };
 
-      const progressHandler = onProgress ? (event: ProgressEvent) => {
-        if (event.lengthComputable) {
-          const progress = (event.loaded / event.total) * 100;
-          onProgress(progress);
-        }
-      } : null;
+      const progressHandler = onProgress
+        ? (event: ProgressEvent) => {
+            if (event.lengthComputable) {
+              const progress = (event.loaded / event.total) * 100;
+              onProgress(progress);
+            }
+          }
+        : null;
 
       const loadHandler = async () => {
         cleanup();
@@ -596,54 +601,62 @@ export class AtlasApiClient {
     return ws;
   }
 
-  async getRecentActivities(filters?: ActivityFilters): Promise<ActivitiesResponse> {
+  async getRecentActivities(
+    filters?: ActivityFilters
+  ): Promise<ActivitiesResponse> {
     let url = "/api/v1/activity/recent";
-    
+
     if (filters) {
       const params = new URLSearchParams();
       if (filters.limit) params.append("limit", filters.limit.toString());
       if (filters.offset) params.append("offset", filters.offset.toString());
-      
+
       const queryString = params.toString();
       if (queryString) {
         url += `?${queryString}`;
       }
     }
-    
+
     return this.request(url, {}, ActivitiesResponseSchema);
   }
 
-  async getServerActivities(serverId: string, filters?: ActivityFilters): Promise<ActivitiesResponse> {
+  async getServerActivities(
+    serverId: string,
+    filters?: ActivityFilters
+  ): Promise<ActivitiesResponse> {
     let url = `/api/v1/activity/servers/${serverId}`;
-    
+
     if (filters) {
       const params = new URLSearchParams();
       if (filters.limit) params.append("limit", filters.limit.toString());
       if (filters.offset) params.append("offset", filters.offset.toString());
-      
+
       const queryString = params.toString();
       if (queryString) {
         url += `?${queryString}`;
       }
     }
-    
+
     return this.request(url, {}, ActivitiesResponseSchema);
   }
 
-  async getGroupActivities(groupName: string, filters?: ActivityFilters): Promise<ActivitiesResponse> {
+  async getGroupActivities(
+    groupName: string,
+    filters?: ActivityFilters
+  ): Promise<ActivitiesResponse> {
     let url = `/api/v1/activity/groups/${groupName}`;
-    
+
     if (filters) {
       const params = new URLSearchParams();
       if (filters.limit) params.append("limit", filters.limit.toString());
       if (filters.offset) params.append("offset", filters.offset.toString());
-      
+
       const queryString = params.toString();
       if (queryString) {
         url += `?${queryString}`;
       }
     }
-    
+
     return this.request(url, {}, ActivitiesResponseSchema);
   }
 
@@ -702,7 +715,9 @@ export class AtlasApiClient {
     return this.request(url, { method: "DELETE" }, FileDeleteResponseSchema);
   }
 
-  async renameTemplateFile(renameData: FileRenameRequest): Promise<ApiResponse<{path: string}>> {
+  async renameTemplateFile(
+    renameData: FileRenameRequest
+  ): Promise<ApiResponse<{ path: string }>> {
     const url = "/api/v1/templates/files/rename";
     return this.request(
       url,
@@ -764,12 +779,14 @@ export class AtlasApiClient {
         }
       };
 
-      const progressHandler = onProgress ? (event: ProgressEvent) => {
-        if (event.lengthComputable) {
-          const progress = (event.loaded / event.total) * 100;
-          onProgress(progress);
-        }
-      } : null;
+      const progressHandler = onProgress
+        ? (event: ProgressEvent) => {
+            if (event.lengthComputable) {
+              const progress = (event.loaded / event.total) * 100;
+              onProgress(progress);
+            }
+          }
+        : null;
 
       const loadHandler = async () => {
         cleanup();
@@ -885,7 +902,8 @@ const atlas = {
   getUtilization: () => getAtlasClient().getUtilization(),
   getPlayerCount: () => getAtlasClient().getPlayerCount(),
   getServerCount: () => getAtlasClient().getServerCount(),
-  getServerLogs: (id: string, lines?: number) => getAtlasClient().getServerLogs(id, lines),
+  getServerLogs: (id: string, lines?: number) =>
+    getAtlasClient().getServerLogs(id, lines),
   getServerFiles: (id: string, path?: string) =>
     getAtlasClient().getServerFiles(id, path),
   getServerFileContents: (id: string, file: string) =>
@@ -922,8 +940,7 @@ const atlas = {
   getGroupActivities: (groupName: string, filters?: ActivityFilters) =>
     getAtlasClient().getGroupActivities(groupName, filters),
   // Template File Management
-  getTemplateFiles: (path?: string) =>
-    getAtlasClient().getTemplateFiles(path),
+  getTemplateFiles: (path?: string) => getAtlasClient().getTemplateFiles(path),
   getTemplateFileContents: (file: string) =>
     getAtlasClient().getTemplateFileContents(file),
   writeTemplateFileContents: (file: string, content: string) =>
