@@ -7,8 +7,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build && tsc --noEmit && eslint .",
-    "start": "pnpm db:migrate-if-configured && node .output/server/index.mjs",
-    "db:migrate-if-configured": "node -e \"const fs = require('fs'); const configFile = './config/config.json'; if (fs.existsSync(configFile)) { console.log('Config found, attempting migrations...'); const { execSync } = require('child_process'); try { execSync('pnpm db:push', { stdio: 'inherit' }); } catch (error) { console.log('Migration failed, continuing with server start...'); } } else { console.log('No config found, skipping migrations...'); }\"",
+    "start": "node -e \"const fs = require('fs'); const { execSync } = require('child_process'); const configFile = './config/config.json'; if (fs.existsSync(configFile)) { console.log('Config found, running migrations...'); try { execSync('pnpm db:push', { stdio: 'inherit' }); } catch (error) { console.log('Migration failed, continuing...'); } } else { console.log('No config found, skipping migrations...'); } console.log('Starting server...'); execSync('node .output/server/index.mjs', { stdio: 'inherit' });\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "db:generate": "drizzle-kit generate",
