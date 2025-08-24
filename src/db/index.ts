@@ -25,7 +25,7 @@ const buildConnectionString = () => {
   if (postgresConfig) {
     return `postgresql://${postgresConfig.username}:${postgresConfig.password}@${postgresConfig.host}:${postgresConfig.port}/${postgresConfig.database}`;
   }
-  return process.env.DATABASE_URL!;
+  return process.env.DATABASE_URL || "postgresql://placeholder:placeholder@localhost:5432/placeholder";
 };
 
 const getDrizzle = () => {
