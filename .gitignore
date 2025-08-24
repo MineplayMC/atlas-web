@@ -20,3 +20,5 @@ yarn.lock
 .tanstack/
 .nitro/
 db-data/
+
+/config/config.json
