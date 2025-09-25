@@ -47,7 +47,6 @@ export const useTemplateUploadFileMutation = (onSuccess?: () => void) => {
       };
 
       xhr.onload = () => {
-        console.log(`Upload response status: ${xhr.status}, response: ${xhr.responseText}`);
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             const result = JSON.parse(xhr.responseText);
@@ -56,22 +55,14 @@ export const useTemplateUploadFileMutation = (onSuccess?: () => void) => {
             resolve({ success: true });
           }
         } else {
-          reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText} - ${xhr.responseText}`));
+          reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
         }
       };
 
-      xhr.onerror = () => {
-        console.error("XHR error occurred");
-        reject(new Error("Upload failed"));
-      };
-      xhr.ontimeout = () => {
-        console.error("XHR timeout occurred");
-        reject(new Error("Upload timeout"));
-      };
+      xhr.onerror = () => reject(new Error("Upload failed"));
+      xhr.ontimeout = () => reject(new Error("Upload timeout"));
 
-      const fullUrl = atlasBaseUrl + uploadPath;
-      console.log(`Uploading to: ${fullUrl}`);
-      xhr.open("POST", fullUrl);
+      xhr.open("POST", atlasBaseUrl + uploadPath);
       xhr.timeout = 10 * 60 * 1000; // 10 minutes
 
       // CRITICAL: Override browser's automatic Content-Type for presigned uploads
@@ -92,8 +83,6 @@ export const useTemplateUploadFileMutation = (onSuccess?: () => void) => {
       });
 
       try {
-        console.log(`Uploading template file ${file.name} using presigned URLs`);
-
         // Use presigned URL for direct upload
         const urlData = await getTemplateUploadUrl(path);
         const result = await uploadFileDirect(file, urlData.uploadPath, urlData.atlasBaseUrl, uploadId);
