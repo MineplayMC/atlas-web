@@ -66,6 +66,7 @@ export const useServerUploadFileMutation = (
       const start = chunkNumber * actualChunkSize;
       const end = Math.min(start + actualChunkSize, file.size);
       const chunk = file.slice(start, end);
+      console.log(`Uploading chunk ${chunkNumber + 1}/${totalChunks}, size: ${chunk.size} bytes`);
 
       const chunkResponse = await axios.put<ChunkedUploadChunkResponse>(
         `/api/chunked-upload?serverId=${encodeURIComponent(server)}&uploadId=${sessionId}&chunkNumber=${chunkNumber}`,
@@ -100,8 +101,11 @@ export const useServerUploadFileMutation = (
 
       try {
         const fileSizeMB = file.size / (1024 * 1024);
+        console.log(`File upload: ${file.name}, size: ${fileSizeMB.toFixed(2)}MB`);
 
-        if (fileSizeMB > 500) {
+        // Use chunked upload for files larger than 50MB
+        if (fileSizeMB > 50) {
+          console.log('Using chunked upload for file:', file.name);
           const result = await chunkedUpload(server, path, file, uploadId);
 
           updateUpload(uploadId, {
@@ -111,6 +115,7 @@ export const useServerUploadFileMutation = (
 
           return result;
         } else {
+          console.log('Using regular upload for file:', file.name);
           const response = await axios.post(
             `/api/upload?serverId=${encodeURIComponent(server)}&path=${encodeURIComponent(path)}`,
             file,

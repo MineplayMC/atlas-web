@@ -33,6 +33,7 @@ export const ServerRoute = createServerFileRoute("/api/chunked-upload").methods(
         if (action === "start") {
           // Proxy start chunked upload to Atlas
           const body = await request.json();
+          console.log("Starting chunked upload:", { serverId, body });
           const atlasUrl = `${atlasBaseUrl}/api/v1/servers/${serverId}/files/upload/start`;
 
           const response = await fetch(atlasUrl, {
@@ -123,11 +124,16 @@ export const ServerRoute = createServerFileRoute("/api/chunked-upload").methods(
           configManager.getAtlasConfig()?.atlasUrl || "http://localhost:9090";
         const atlasUrl = `${atlasBaseUrl}/api/v1/servers/${serverId}/files/upload/${uploadId}/chunk/${chunkNumber}`;
 
+        // Log chunk upload details
+        const bodySize = request.headers.get('content-length');
+        console.log(`Uploading chunk ${chunkNumber} for upload ${uploadId}:`, { bodySize });
+
         const response = await fetch(atlasUrl, {
           method: "PUT",
           body: request.body,
           headers: {
             Authorization: `Bearer ${configManager.getAtlasConfig()?.atlasApiKey}`,
+            "Content-Type": "application/octet-stream",
           },
           // @ts-ignore - duplex is needed for streaming
           duplex: "half",
@@ -141,6 +147,7 @@ export const ServerRoute = createServerFileRoute("/api/chunked-upload").methods(
         }
 
         const result = await response.json();
+        console.log(`Chunk ${chunkNumber} upload response:`, result);
 
         return new Response(JSON.stringify(result), {
           status: 200,
