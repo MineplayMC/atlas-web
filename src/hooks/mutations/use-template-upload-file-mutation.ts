@@ -8,9 +8,65 @@ interface TemplateUploadParams {
   file: File;
 }
 
+interface PresignedTemplateUploadResponse {
+  uploadPath: string;
+  token: string;
+  expiresAt: string;
+  method: string;
+  atlasBaseUrl: string;
+}
+
 export const useTemplateUploadFileMutation = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   const { addUpload, updateUpload } = useUploadProgress();
+
+  // Get presigned URL for template upload
+  const getTemplateUploadUrl = async (path: string): Promise<PresignedTemplateUploadResponse> => {
+    const response = await axios.post("/api/get-template-upload-url", {
+      path,
+      expirationSeconds: 300, // 5 minutes
+    });
+    return response.data;
+  };
+
+  // Upload file directly to Atlas using presigned URL
+  const uploadFileDirect = async (
+    file: File,
+    uploadPath: string,
+    atlasBaseUrl: string,
+    uploadId: string
+  ) => {
+    return new Promise<any>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 100;
+          updateUpload(uploadId, { progress: Math.round(progress) });
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const result = JSON.parse(xhr.responseText);
+            resolve(result);
+          } catch {
+            resolve({ success: true });
+          }
+        } else {
+          reject(new Error(`Upload failed: ${xhr.statusText}`));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error("Upload failed"));
+      xhr.ontimeout = () => reject(new Error("Upload timeout"));
+
+      xhr.open("POST", atlasBaseUrl + uploadPath);
+      xhr.timeout = 10 * 60 * 1000; // 10 minutes
+      xhr.send(file);
+    });
+  };
 
   return useMutation({
     mutationFn: async ({ path, file }: TemplateUploadParams) => {
@@ -23,28 +79,21 @@ export const useTemplateUploadFileMutation = (onSuccess?: () => void) => {
       });
 
       try {
-        const response = await axios.post(
-          `/api/template-upload?path=${encodeURIComponent(path)}`,
-          file,
-          {
-            timeout: 10 * 60 * 1000,
-            onUploadProgress: (progressEvent) => {
-              if (progressEvent.total) {
-                const progress =
-                  (progressEvent.loaded / progressEvent.total) * 100;
-                updateUpload(uploadId, { progress: Math.round(progress) });
-              }
-            },
-            headers: { "Content-Type": "application/octet-stream" },
-          }
-        );
+        console.log(`Uploading template file ${file.name} using presigned URLs`);
+
+        // Use presigned URL for direct upload
+        const urlData = await getTemplateUploadUrl(path);
+        const result = await uploadFileDirect(file, urlData.uploadPath, urlData.atlasBaseUrl, uploadId);
 
         updateUpload(uploadId, {
           progress: 100,
           status: "completed",
         });
 
-        return response.data;
+        // Log successful template upload via separate audit endpoint if needed
+        // The presigned upload itself should handle the audit logging in Atlas
+
+        return result;
       } catch (error) {
         updateUpload(uploadId, {
           status: "error",
