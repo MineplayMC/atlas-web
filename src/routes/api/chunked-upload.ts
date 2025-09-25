@@ -120,7 +120,7 @@ export const ServerRoute = createServerFileRoute("/api/chunked-upload").methods(
 
       try {
         const atlasBaseUrl =
-          configManager.getAtlasConfig()?.baseUrl || "http://localhost:9090";
+          configManager.getAtlasConfig()?.atlasUrl || "http://localhost:9090";
         const atlasUrl = `${atlasBaseUrl}/api/v1/servers/${serverId}/files/upload/${uploadId}/chunk/${chunkNumber}`;
 
         const response = await fetch(atlasUrl, {

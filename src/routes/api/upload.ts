@@ -32,7 +32,7 @@ export const ServerRoute = createServerFileRoute("/api/upload").methods({
       // We'll implement proper streaming in a future iteration
       const atlasClient = atlas as any;
       const encodedPath = encodeURIComponent(path);
-      const url = `${atlasClient.baseUrl || configManager.getAtlasConfig()?.baseUrl || "http://localhost:9090"}/api/v1/servers/${serverId}/files/upload?path=${encodedPath}`;
+      const url = `${atlasClient.baseUrl || configManager.getAtlasConfig()?.atlasUrl || "http://localhost:9090"}/api/v1/servers/${serverId}/files/upload?path=${encodedPath}`;
 
       // Stream directly to Atlas without buffering
       const response = await fetch(url, {

@@ -30,7 +30,7 @@ export const ServerRoute = createServerFileRoute(
       // Proxy to Atlas API template upload endpoint
       const atlasClient = atlas as any;
       const encodedPath = encodeURIComponent(path);
-      const atlasUrl = `${atlasClient.baseUrl || configManager.getAtlasConfig()?.baseUrl || "http://localhost:9090"}/api/v1/templates/files/upload?path=${encodedPath}`;
+      const atlasUrl = `${atlasClient.baseUrl || configManager.getAtlasConfig()?.atlasUrl || "http://localhost:9090"}/api/v1/templates/files/upload?path=${encodedPath}`;
 
       // Stream directly to Atlas without buffering
       const response = await fetch(atlasUrl, {
