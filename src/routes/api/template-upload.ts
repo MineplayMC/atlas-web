@@ -1,6 +1,5 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
 
-import atlas from "@/server/lib/atlas-api/atlas-api.client";
 import { AuditService } from "@/server/lib/audit";
 import { auth } from "@/server/lib/auth";
 import configManager from "@/server/lib/config-manager";
