@@ -27,10 +27,43 @@ export const ServerRoute = createServerFileRoute(
     }
 
     try {
-      // Proxy to Atlas API template upload endpoint
-      const atlasClient = atlas as any;
-      const encodedPath = encodeURIComponent(path);
-      const atlasUrl = `${atlasClient.baseUrl || configManager.getAtlasConfig()?.atlasUrl || "http://localhost:9090"}/api/v1/templates/files/upload?path=${encodedPath}`;
+      // Try to get presigned URL first, fallback to direct upload
+      const atlasBaseUrl = configManager.getAtlasConfig()?.atlasUrl;
+      const atlasApiKey = configManager.getAtlasConfig()?.atlasApiKey;
+
+      if (!atlasBaseUrl || !atlasApiKey) {
+        return new Response("Atlas configuration not found", { status: 500 });
+      }
+
+      let atlasUrl: string;
+
+      try {
+        // Try to get presigned URL
+        const presignResponse = await fetch(
+          `${atlasBaseUrl}/api/v1/templates/files/upload/presign`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${atlasApiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ path, expirationSeconds: 300 }),
+          }
+        );
+
+        if (presignResponse.ok) {
+          const presignData = await presignResponse.json();
+          atlasUrl = atlasBaseUrl + presignData.data.uploadPath;
+          console.log("Using presigned URL:", atlasUrl);
+        } else {
+          throw new Error("Presigned URL failed");
+        }
+      } catch (presignError) {
+        // Fallback to direct upload
+        console.log("Presigned URL failed, using direct upload:", presignError);
+        const encodedPath = encodeURIComponent(path);
+        atlasUrl = `${atlasBaseUrl}/api/v1/templates/files/upload?path=${encodedPath}`;
+      }
 
       // Stream directly to Atlas without buffering
       const response = await fetch(atlasUrl, {

@@ -107,6 +107,10 @@ export const useServerUploadFileMutation = (
 
       xhr.open("POST", atlasBaseUrl + uploadPath);
       xhr.timeout = 10 * 60 * 1000; // 10 minutes
+
+      // CRITICAL: Override browser's automatic Content-Type for presigned uploads
+      xhr.setRequestHeader("Content-Type", "");
+
       xhr.send(file);
     });
   };
@@ -145,6 +149,10 @@ export const useServerUploadFileMutation = (
 
         xhr.open("PUT", atlasBaseUrl + chunkPath);
         xhr.timeout = 60000; // 1 minute per chunk
+
+        // CRITICAL: Override browser's automatic Content-Type for presigned uploads
+        xhr.setRequestHeader("Content-Type", "");
+
         xhr.send(chunk);
       });
     }
