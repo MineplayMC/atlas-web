@@ -47,11 +47,11 @@ export const ServerRoute = createServerFileRoute("/api/get-upload-url").methods(
         throw new Error(`Atlas API Error: ${errorText || atlasResponse.statusText}`);
       }
 
-      const data = await atlasResponse.json();
+      const atlasData = await atlasResponse.json();
 
-      // Add Atlas base URL to the response so frontend knows where to upload
+      // Extract the actual data from Atlas response and add our base URL
       const responseData = {
-        ...data,
+        ...atlasData.data, // Extract data from nested structure
         atlasBaseUrl,
       };
 
