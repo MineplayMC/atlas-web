@@ -125,7 +125,7 @@ export const ServerRoute = createServerFileRoute("/api/chunked-upload").methods(
         const atlasUrl = `${atlasBaseUrl}/api/v1/servers/${serverId}/files/upload/${uploadId}/chunk/${chunkNumber}`;
 
         // Log chunk upload details
-        const bodySize = request.headers.get('content-length');
+        const bodySize = request.headers.get("content-length");
         console.log(`Uploading chunk ${chunkNumber} for upload ${uploadId}:`, { bodySize });
 
         const response = await fetch(atlasUrl, {

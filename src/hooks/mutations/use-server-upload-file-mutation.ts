@@ -105,7 +105,7 @@ export const useServerUploadFileMutation = (
 
         // Use chunked upload for files larger than 50MB
         if (fileSizeMB > 50) {
-          console.log('Using chunked upload for file:', file.name);
+          console.log("Using chunked upload for file:", file.name);
           const result = await chunkedUpload(server, path, file, uploadId);
 
           updateUpload(uploadId, {
@@ -115,7 +115,7 @@ export const useServerUploadFileMutation = (
 
           return result;
         } else {
-          console.log('Using regular upload for file:', file.name);
+          console.log("Using regular upload for file:", file.name);
           const response = await axios.post(
             `/api/upload?serverId=${encodeURIComponent(server)}&path=${encodeURIComponent(path)}`,
             file,
