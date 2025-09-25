@@ -43,6 +43,9 @@ import { Route as MainServersServerIdFilesEditRouteImport } from "./routes/_main
 import { ServerRoute as ApiUploadProgressServerRouteImport } from "./routes/api/upload-progress";
 import { ServerRoute as ApiUploadServerRouteImport } from "./routes/api/upload";
 import { ServerRoute as ApiTemplateUploadServerRouteImport } from "./routes/api/template-upload";
+import { ServerRoute as ApiGetUploadUrlServerRouteImport } from "./routes/api/get-upload-url";
+import { ServerRoute as ApiGetChunkedUploadUrlServerRouteImport } from "./routes/api/get-chunked-upload-url";
+import { ServerRoute as ApiCompleteUploadServerRouteImport } from "./routes/api/complete-upload";
 import { ServerRoute as ApiChunkedUploadServerRouteImport } from "./routes/api/chunked-upload";
 import { ServerRoute as ApiSplatServerRouteImport } from "./routes/api/$";
 import { ServerRoute as ApiAuthSplatServerRouteImport } from "./routes/api/auth/$";
@@ -212,6 +215,22 @@ const ApiUploadServerRoute = ApiUploadServerRouteImport.update({
 const ApiTemplateUploadServerRoute = ApiTemplateUploadServerRouteImport.update({
   id: "/api/template-upload",
   path: "/api/template-upload",
+  getParentRoute: () => rootServerRouteImport,
+} as any);
+const ApiGetUploadUrlServerRoute = ApiGetUploadUrlServerRouteImport.update({
+  id: "/api/get-upload-url",
+  path: "/api/get-upload-url",
+  getParentRoute: () => rootServerRouteImport,
+} as any);
+const ApiGetChunkedUploadUrlServerRoute =
+  ApiGetChunkedUploadUrlServerRouteImport.update({
+    id: "/api/get-chunked-upload-url",
+    path: "/api/get-chunked-upload-url",
+    getParentRoute: () => rootServerRouteImport,
+  } as any);
+const ApiCompleteUploadServerRoute = ApiCompleteUploadServerRouteImport.update({
+  id: "/api/complete-upload",
+  path: "/api/complete-upload",
   getParentRoute: () => rootServerRouteImport,
 } as any);
 const ApiChunkedUploadServerRoute = ApiChunkedUploadServerRouteImport.update({
@@ -413,6 +432,9 @@ export interface RootRouteChildren {
 export interface FileServerRoutesByFullPath {
   "/api/$": typeof ApiSplatServerRoute;
   "/api/chunked-upload": typeof ApiChunkedUploadServerRoute;
+  "/api/complete-upload": typeof ApiCompleteUploadServerRoute;
+  "/api/get-chunked-upload-url": typeof ApiGetChunkedUploadUrlServerRoute;
+  "/api/get-upload-url": typeof ApiGetUploadUrlServerRoute;
   "/api/template-upload": typeof ApiTemplateUploadServerRoute;
   "/api/upload": typeof ApiUploadServerRoute;
   "/api/upload-progress": typeof ApiUploadProgressServerRoute;
@@ -421,6 +443,9 @@ export interface FileServerRoutesByFullPath {
 export interface FileServerRoutesByTo {
   "/api/$": typeof ApiSplatServerRoute;
   "/api/chunked-upload": typeof ApiChunkedUploadServerRoute;
+  "/api/complete-upload": typeof ApiCompleteUploadServerRoute;
+  "/api/get-chunked-upload-url": typeof ApiGetChunkedUploadUrlServerRoute;
+  "/api/get-upload-url": typeof ApiGetUploadUrlServerRoute;
   "/api/template-upload": typeof ApiTemplateUploadServerRoute;
   "/api/upload": typeof ApiUploadServerRoute;
   "/api/upload-progress": typeof ApiUploadProgressServerRoute;
@@ -430,6 +455,9 @@ export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport;
   "/api/$": typeof ApiSplatServerRoute;
   "/api/chunked-upload": typeof ApiChunkedUploadServerRoute;
+  "/api/complete-upload": typeof ApiCompleteUploadServerRoute;
+  "/api/get-chunked-upload-url": typeof ApiGetChunkedUploadUrlServerRoute;
+  "/api/get-upload-url": typeof ApiGetUploadUrlServerRoute;
   "/api/template-upload": typeof ApiTemplateUploadServerRoute;
   "/api/upload": typeof ApiUploadServerRoute;
   "/api/upload-progress": typeof ApiUploadProgressServerRoute;
@@ -440,6 +468,9 @@ export interface FileServerRouteTypes {
   fullPaths:
     | "/api/$"
     | "/api/chunked-upload"
+    | "/api/complete-upload"
+    | "/api/get-chunked-upload-url"
+    | "/api/get-upload-url"
     | "/api/template-upload"
     | "/api/upload"
     | "/api/upload-progress"
@@ -448,6 +479,9 @@ export interface FileServerRouteTypes {
   to:
     | "/api/$"
     | "/api/chunked-upload"
+    | "/api/complete-upload"
+    | "/api/get-chunked-upload-url"
+    | "/api/get-upload-url"
     | "/api/template-upload"
     | "/api/upload"
     | "/api/upload-progress"
@@ -456,6 +490,9 @@ export interface FileServerRouteTypes {
     | "__root__"
     | "/api/$"
     | "/api/chunked-upload"
+    | "/api/complete-upload"
+    | "/api/get-chunked-upload-url"
+    | "/api/get-upload-url"
     | "/api/template-upload"
     | "/api/upload"
     | "/api/upload-progress"
@@ -465,6 +502,9 @@ export interface FileServerRouteTypes {
 export interface RootServerRouteChildren {
   ApiSplatServerRoute: typeof ApiSplatServerRoute;
   ApiChunkedUploadServerRoute: typeof ApiChunkedUploadServerRoute;
+  ApiCompleteUploadServerRoute: typeof ApiCompleteUploadServerRoute;
+  ApiGetChunkedUploadUrlServerRoute: typeof ApiGetChunkedUploadUrlServerRoute;
+  ApiGetUploadUrlServerRoute: typeof ApiGetUploadUrlServerRoute;
   ApiTemplateUploadServerRoute: typeof ApiTemplateUploadServerRoute;
   ApiUploadServerRoute: typeof ApiUploadServerRoute;
   ApiUploadProgressServerRoute: typeof ApiUploadProgressServerRoute;
@@ -701,6 +741,27 @@ declare module "@tanstack/react-start/server" {
       preLoaderRoute: typeof ApiTemplateUploadServerRouteImport;
       parentRoute: typeof rootServerRouteImport;
     };
+    "/api/get-upload-url": {
+      id: "/api/get-upload-url";
+      path: "/api/get-upload-url";
+      fullPath: "/api/get-upload-url";
+      preLoaderRoute: typeof ApiGetUploadUrlServerRouteImport;
+      parentRoute: typeof rootServerRouteImport;
+    };
+    "/api/get-chunked-upload-url": {
+      id: "/api/get-chunked-upload-url";
+      path: "/api/get-chunked-upload-url";
+      fullPath: "/api/get-chunked-upload-url";
+      preLoaderRoute: typeof ApiGetChunkedUploadUrlServerRouteImport;
+      parentRoute: typeof rootServerRouteImport;
+    };
+    "/api/complete-upload": {
+      id: "/api/complete-upload";
+      path: "/api/complete-upload";
+      fullPath: "/api/complete-upload";
+      preLoaderRoute: typeof ApiCompleteUploadServerRouteImport;
+      parentRoute: typeof rootServerRouteImport;
+    };
     "/api/chunked-upload": {
       id: "/api/chunked-upload";
       path: "/api/chunked-upload";
@@ -837,6 +898,9 @@ export const routeTree = rootRouteImport
 const rootServerRouteChildren: RootServerRouteChildren = {
   ApiSplatServerRoute: ApiSplatServerRoute,
   ApiChunkedUploadServerRoute: ApiChunkedUploadServerRoute,
+  ApiCompleteUploadServerRoute: ApiCompleteUploadServerRoute,
+  ApiGetChunkedUploadUrlServerRoute: ApiGetChunkedUploadUrlServerRoute,
+  ApiGetUploadUrlServerRoute: ApiGetUploadUrlServerRoute,
   ApiTemplateUploadServerRoute: ApiTemplateUploadServerRoute,
   ApiUploadServerRoute: ApiUploadServerRoute,
   ApiUploadProgressServerRoute: ApiUploadProgressServerRoute,
