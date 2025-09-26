@@ -7,6 +7,7 @@ export interface SetupStatusResponse {
   config: {
     oidcConfig: {
       providerName: string;
+      provider: string;
     };
     atlasConfig: {
       baseUrl: string;

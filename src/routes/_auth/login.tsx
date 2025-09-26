@@ -13,7 +13,7 @@ const RouteComponent = () => {
   const handleIdentitySignIn = async () => {
     try {
       setIsIdentityLoading(true);
-      switch (config.config?.oidcConfig.providerName) {
+      switch (config.config?.oidcConfig.provider.toLowerCase()) {
         case "discord":
           await authClient.signIn.social({
             provider: "discord",

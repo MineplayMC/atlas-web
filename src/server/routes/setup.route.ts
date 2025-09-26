@@ -113,6 +113,7 @@ const getSetupStatus = os.handler(async () => {
     const publicConfig = {
       oidcConfig: {
         providerName: config.oidcConfig?.providerName,
+        provider: config.oidcConfig?.provider,
       },
       atlasConfig: {
         baseUrl: config.atlasConfig?.baseUrl,

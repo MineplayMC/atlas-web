@@ -182,7 +182,10 @@ const AuthPage = () => {
 
   const getRedirectUrl = () => {
     const baseUrl = window.location.origin;
-    return `${baseUrl}/api/auth/oauth2/callback/identity`;
+    if (selectedProvider === "custom") {
+      return `${baseUrl}/api/auth/oauth2/callback/identity`;
+    }
+    return `${baseUrl}/api/auth/callback/${selectedProvider}`;
   };
 
   return (

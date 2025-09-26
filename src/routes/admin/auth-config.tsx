@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -53,8 +53,17 @@ const RouteComponent = () => {
     success: boolean;
     message: string;
   } | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState("custom");
 
   const { data: currentConfig } = useQuery(orpc.admin.getConfig.queryOptions());
+
+  const getRedirectUrl = (provider: string) => {
+    const baseUrl = window.location.origin;
+    if (provider === "custom") {
+      return `${baseUrl}/api/auth/oauth2/callback/identity`;
+    }
+    return `${baseUrl}/api/auth/callback/${provider}`;
+  };
 
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(authSchema),
@@ -69,6 +78,13 @@ const RouteComponent = () => {
       scopes: currentConfig?.oidcConfig?.scopes || ["openid", "profile", "email", "groups"],
     },
   });
+
+  // Update selectedProvider when currentConfig loads
+  useEffect(() => {
+    if (currentConfig?.oidcConfig?.provider) {
+      setSelectedProvider(currentConfig.oidcConfig.provider);
+    }
+  }, [currentConfig]);
 
   const testOidc = useMutation(
     orpc.admin.testOidcConnection.mutationOptions({
@@ -127,6 +143,7 @@ const RouteComponent = () => {
 
   const handleProviderChange = (value: string) => {
     form.setValue("provider", value);
+    setSelectedProvider(value);
 
     const presets: Record<string, Partial<AuthFormValues>> = {
       google: {
@@ -177,6 +194,15 @@ const RouteComponent = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="bg-accent/50 border-primary/30 mb-6 rounded-lg border p-3">
+            <p className="mb-1 text-sm font-semibold">Redirect URL</p>
+            <p className="text-muted-foreground mb-2 text-sm">
+              Configure this URL in your OAuth provider:
+            </p>
+            <code className="bg-background rounded px-2 py-1 text-xs">
+              {getRedirectUrl(selectedProvider)}
+            </code>
+          </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
