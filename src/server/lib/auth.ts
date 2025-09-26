@@ -1,4 +1,4 @@
-import { betterAuth, undefined } from "better-auth";
+import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { genericOAuth } from "better-auth/plugins";
 
@@ -26,17 +26,14 @@ function createAuth() {
       discord: {
         clientId: oidcConfig.clientId,
         clientSecret: oidcConfig.clientSecret,
-        scopes: oidcConfig.scopes ?? undefined,
       },
       github: {
         clientId: oidcConfig.clientId,
         clientSecret: oidcConfig.clientSecret,
-        scopes: oidcConfig.scopes ?? undefined,
       },
       google: {
         clientId: oidcConfig.clientId,
         clientSecret: oidcConfig.clientSecret,
-        scopes: oidcConfig.scopes ?? undefined,
       },
     },
     plugins: [
