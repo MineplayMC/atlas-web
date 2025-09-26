@@ -32,24 +32,28 @@ const providers = {
     authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     userInfoUrl: "https://www.googleapis.com/oauth2/v3/userinfo",
+    scopes: ["openid", "profile", "email"],
   },
   github: {
     name: "GitHub",
     authorizationUrl: "https://github.com/login/oauth/authorize",
     tokenUrl: "https://github.com/login/oauth/access_token",
     userInfoUrl: "https://api.github.com/user",
+    scopes: ["read:user", "user:email"],
   },
   discord: {
     name: "Discord",
     authorizationUrl: "https://discord.com/api/oauth2/authorize",
     tokenUrl: "https://discord.com/api/oauth2/token",
     userInfoUrl: "https://discord.com/api/users/@me",
+    scopes: ["identify", "email", "guilds"],
   },
   custom: {
     name: "Custom Provider",
     authorizationUrl: "",
     tokenUrl: "",
     userInfoUrl: "",
+    scopes: ["openid", "profile", "email", "groups"],
   },
 };
 
@@ -71,6 +75,7 @@ const oidcSchema = z
       .string()
       .url("Must be a valid URL")
       .min(1, "User Info URL is required"),
+    scopes: z.array(z.string()).optional(),
   })
   .refine(
     (data) => {
@@ -145,12 +150,14 @@ const AuthPage = () => {
       form.setValue("authorizationUrl", providerConfig.authorizationUrl);
       form.setValue("tokenUrl", providerConfig.tokenUrl);
       form.setValue("userInfoUrl", providerConfig.userInfoUrl);
+      form.setValue("scopes", providerConfig.scopes);
       updateOIDCConfig({
         provider,
         providerName: providerConfig.name,
         authorizationUrl: providerConfig.authorizationUrl,
         tokenUrl: providerConfig.tokenUrl,
         userInfoUrl: providerConfig.userInfoUrl,
+        scopes: providerConfig.scopes,
       });
     }
   };
@@ -396,6 +403,34 @@ const AuthPage = () => {
               />
             </>
           )}
+
+          <FormField
+            control={form.control}
+            name="scopes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>OAuth Scopes</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="openid profile email groups"
+                    value={field.value?.join(" ") || ""}
+                    onChange={(e) => {
+                      const scopes = e.target.value
+                        .split(" ")
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0);
+                      field.onChange(scopes);
+                      updateOIDCConfig({ scopes });
+                    }}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Space-separated list of OAuth scopes to request from the provider
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="space-y-3 pt-4">
             <Button

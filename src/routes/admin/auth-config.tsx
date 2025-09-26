@@ -1,11 +1,12 @@
-import React, { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Shield, CheckCircle, XCircle } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { CheckCircle, Shield, XCircle } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +43,7 @@ const authSchema = z.object({
   authorizationUrl: z.string().url("Must be a valid URL"),
   tokenUrl: z.string().url("Must be a valid URL"),
   userInfoUrl: z.string().url("Must be a valid URL"),
+  scopes: z.array(z.string()).optional(),
 });
 
 type AuthFormValues = z.infer<typeof authSchema>;
@@ -64,6 +66,7 @@ const RouteComponent = () => {
       authorizationUrl: currentConfig?.oidcConfig?.authorizationUrl || "",
       tokenUrl: currentConfig?.oidcConfig?.tokenUrl || "",
       userInfoUrl: currentConfig?.oidcConfig?.userInfoUrl || "",
+      scopes: currentConfig?.oidcConfig?.scopes || ["openid", "profile", "email", "groups"],
     },
   });
 
@@ -88,7 +91,8 @@ const RouteComponent = () => {
     orpc.admin.updateAuthConfig.mutationOptions({
       onSuccess: () => {
         toast.success("Configuration Updated", {
-          description: "Authentication configuration has been updated successfully. Please restart the server for changes to take effect.",
+          description:
+            "Authentication configuration has been updated successfully. Please restart the server for changes to take effect.",
         });
         form.reset(form.getValues());
       },
@@ -130,21 +134,25 @@ const RouteComponent = () => {
         authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
         tokenUrl: "https://oauth2.googleapis.com/token",
         userInfoUrl: "https://www.googleapis.com/oauth2/v3/userinfo",
+        scopes: ["openid", "profile", "email"],
       },
       github: {
         providerName: "GitHub",
         authorizationUrl: "https://github.com/login/oauth/authorize",
         tokenUrl: "https://github.com/login/oauth/access_token",
         userInfoUrl: "https://api.github.com/user",
+        scopes: ["read:user", "user:email"],
       },
       discord: {
         providerName: "Discord",
-        authorizationUrl: "https://discord.com/api/oauth2/authorize",
-        tokenUrl: "https://discord.com/api/oauth2/token",
-        userInfoUrl: "https://discord.com/api/users/@me",
+        authorizationUrl: "https://discord.com/oauth2/authorize",
+        tokenUrl: "https://discord.com/oauth2/token",
+        userInfoUrl: "https://discord.com/users/@me",
+        scopes: ["identify", "email", "guilds"],
       },
       custom: {
         providerName: "Custom Provider",
+        scopes: ["openid", "profile", "email", "groups"],
       },
     };
 
@@ -164,7 +172,8 @@ const RouteComponent = () => {
             <CardTitle>Authentication Configuration</CardTitle>
           </div>
           <CardDescription>
-            Configure your OIDC authentication provider settings. Changes will require a server restart.
+            Configure your OIDC authentication provider settings. Changes will
+            require a server restart.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -193,7 +202,9 @@ const RouteComponent = () => {
                           <SelectItem value="google">Google</SelectItem>
                           <SelectItem value="github">GitHub</SelectItem>
                           <SelectItem value="discord">Discord</SelectItem>
-                          <SelectItem value="custom">Custom Provider</SelectItem>
+                          <SelectItem value="custom">
+                            Custom Provider
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -291,9 +302,7 @@ const RouteComponent = () => {
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription>
-                        OIDC token endpoint URL
-                      </FormDescription>
+                      <FormDescription>OIDC token endpoint URL</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -318,11 +327,38 @@ const RouteComponent = () => {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="scopes"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel>OAuth Scopes</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="openid profile email groups"
+                          value={field.value?.join(" ") || ""}
+                          onChange={(e) => {
+                            const scopes = e.target.value
+                              .split(" ")
+                              .map(s => s.trim())
+                              .filter(s => s.length > 0);
+                            field.onChange(scopes);
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Space-separated list of OAuth scopes to request
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {testResult && (
                 <div
-                  className={`flex items-center gap-2 p-3 rounded-lg ${
+                  className={`flex items-center gap-2 rounded-lg p-3 ${
                     testResult.success
                       ? "bg-green-500/10 text-green-600"
                       : "bg-destructive/10 text-destructive"

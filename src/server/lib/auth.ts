@@ -38,7 +38,12 @@ function createAuth() {
             authorizationUrl: oidcConfig.authorizationUrl,
             tokenUrl: oidcConfig.tokenUrl,
             userInfoUrl: oidcConfig.userInfoUrl,
-            scopes: ["openid", "profile", "email", "groups"],
+            scopes: oidcConfig.scopes || [
+              "openid",
+              "profile",
+              "email",
+              "groups",
+            ],
           },
         ],
       }),
@@ -52,7 +57,7 @@ export const auth = new Proxy({} as ReturnType<typeof betterAuth>, {
       authInstance = createAuth();
     }
     return (authInstance as any)[prop];
-  }
+  },
 });
 
 export const resetAuth = () => {

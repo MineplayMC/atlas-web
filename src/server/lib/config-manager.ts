@@ -21,6 +21,7 @@ interface SetupConfig {
     tokenUrl: string;
     userInfoUrl: string;
     secret: string;
+    scopes?: string[];
   };
   atlasConfig: {
     baseUrl: string;
