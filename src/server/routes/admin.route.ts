@@ -43,6 +43,7 @@ const getConfig = os.handler(async () => {
         authorizationUrl: config.oidcConfig?.authorizationUrl,
         tokenUrl: config.oidcConfig?.tokenUrl,
         userInfoUrl: config.oidcConfig?.userInfoUrl,
+        scopes: config.oidcConfig?.scopes,
       },
       atlasConfig: {
         baseUrl: config.atlasConfig?.baseUrl,
@@ -112,6 +113,7 @@ const updateAuthConfig = os
       authorizationUrl: z.string(),
       tokenUrl: z.string(),
       userInfoUrl: z.string(),
+      scopes: z.array(z.string()).optional(),
     })
   )
   .handler(async ({ input }) => {
