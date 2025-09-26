@@ -1,8 +1,10 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin, genericOAuth } from "better-auth/plugins";
+import { eq, count } from "drizzle-orm";
 
 import { db } from "@/db";
+import * as schema from "@/db/schema";
 import configManager from "@/server/lib/config-manager";
 
 let authInstance: ReturnType<typeof betterAuth> | null = null;
@@ -59,6 +61,32 @@ function createAuth() {
         ],
       }),
     ],
+    databaseHooks: {
+      user: {
+        create: {
+          after: async (user) => {
+            try {
+              // Count total users to see if this is the first one
+              const userCount = await db
+                .select({ count: count() })
+                .from(schema.users);
+
+              // If this is the first user (count = 1), make them admin
+              if (userCount[0]?.count === 1) {
+                await db
+                  .update(schema.users)
+                  .set({ role: "admin" })
+                  .where(eq(schema.users.id, user.id));
+
+                console.log(`First user ${user.email} has been made admin`);
+              }
+            } catch (error) {
+              console.error("Error checking/setting first user as admin:", error);
+            }
+          },
+        },
+      },
+    },
   });
 }
 

@@ -6,7 +6,7 @@ export const users = pgTable("atlas_users", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull(),
   image: text("image"),
-  role: text("role").notNull().default("user"),
+  role: text("role").default("user"),
   banned: boolean("banned").default(false),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
