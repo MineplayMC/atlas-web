@@ -22,7 +22,11 @@ import { Route as SetupDatabaseRouteImport } from "./routes/setup/database";
 import { Route as SetupBrandingRouteImport } from "./routes/setup/branding";
 import { Route as SetupAuthRouteImport } from "./routes/setup/auth";
 import { Route as SetupAtlasRouteImport } from "./routes/setup/atlas";
+import { Route as AdminDatabaseConfigRouteImport } from "./routes/admin/database-config";
+import { Route as AdminBrandingConfigRouteImport } from "./routes/admin/branding-config";
+import { Route as AdminAuthConfigRouteImport } from "./routes/admin/auth-config";
 import { Route as AdminAuditLogsRouteImport } from "./routes/admin/audit-logs";
+import { Route as AdminAtlasConfigRouteImport } from "./routes/admin/atlas-config";
 import { Route as MainActivityRouteImport } from "./routes/_main/activity";
 import { Route as AuthLoginRouteImport } from "./routes/_auth/login";
 import { Route as MainTemplatesIndexRouteImport } from "./routes/_main/templates/index";
@@ -44,6 +48,7 @@ import { ServerRoute as ApiUploadProgressServerRouteImport } from "./routes/api/
 import { ServerRoute as ApiUploadServerRouteImport } from "./routes/api/upload";
 import { ServerRoute as ApiTemplateUploadServerRouteImport } from "./routes/api/template-upload";
 import { ServerRoute as ApiGetUploadUrlServerRouteImport } from "./routes/api/get-upload-url";
+import { ServerRoute as ApiGetTemplateUploadUrlServerRouteImport } from "./routes/api/get-template-upload-url";
 import { ServerRoute as ApiGetChunkedUploadUrlServerRouteImport } from "./routes/api/get-chunked-upload-url";
 import { ServerRoute as ApiCompleteUploadServerRouteImport } from "./routes/api/complete-upload";
 import { ServerRoute as ApiChunkedUploadServerRouteImport } from "./routes/api/chunked-upload";
@@ -105,9 +110,29 @@ const SetupAtlasRoute = SetupAtlasRouteImport.update({
   path: "/atlas",
   getParentRoute: () => SetupRoute,
 } as any);
+const AdminDatabaseConfigRoute = AdminDatabaseConfigRouteImport.update({
+  id: "/database-config",
+  path: "/database-config",
+  getParentRoute: () => AdminRoute,
+} as any);
+const AdminBrandingConfigRoute = AdminBrandingConfigRouteImport.update({
+  id: "/branding-config",
+  path: "/branding-config",
+  getParentRoute: () => AdminRoute,
+} as any);
+const AdminAuthConfigRoute = AdminAuthConfigRouteImport.update({
+  id: "/auth-config",
+  path: "/auth-config",
+  getParentRoute: () => AdminRoute,
+} as any);
 const AdminAuditLogsRoute = AdminAuditLogsRouteImport.update({
   id: "/audit-logs",
   path: "/audit-logs",
+  getParentRoute: () => AdminRoute,
+} as any);
+const AdminAtlasConfigRoute = AdminAtlasConfigRouteImport.update({
+  id: "/atlas-config",
+  path: "/atlas-config",
   getParentRoute: () => AdminRoute,
 } as any);
 const MainActivityRoute = MainActivityRouteImport.update({
@@ -222,6 +247,12 @@ const ApiGetUploadUrlServerRoute = ApiGetUploadUrlServerRouteImport.update({
   path: "/api/get-upload-url",
   getParentRoute: () => rootServerRouteImport,
 } as any);
+const ApiGetTemplateUploadUrlServerRoute =
+  ApiGetTemplateUploadUrlServerRouteImport.update({
+    id: "/api/get-template-upload-url",
+    path: "/api/get-template-upload-url",
+    getParentRoute: () => rootServerRouteImport,
+  } as any);
 const ApiGetChunkedUploadUrlServerRoute =
   ApiGetChunkedUploadUrlServerRouteImport.update({
     id: "/api/get-chunked-upload-url",
@@ -254,7 +285,11 @@ export interface FileRoutesByFullPath {
   "/setup": typeof SetupRouteWithChildren;
   "/login": typeof AuthLoginRoute;
   "/activity": typeof MainActivityRoute;
+  "/admin/atlas-config": typeof AdminAtlasConfigRoute;
   "/admin/audit-logs": typeof AdminAuditLogsRoute;
+  "/admin/auth-config": typeof AdminAuthConfigRoute;
+  "/admin/branding-config": typeof AdminBrandingConfigRoute;
+  "/admin/database-config": typeof AdminDatabaseConfigRoute;
   "/setup/atlas": typeof SetupAtlasRoute;
   "/setup/auth": typeof SetupAuthRoute;
   "/setup/branding": typeof SetupBrandingRoute;
@@ -281,7 +316,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   "/login": typeof AuthLoginRoute;
   "/activity": typeof MainActivityRoute;
+  "/admin/atlas-config": typeof AdminAtlasConfigRoute;
   "/admin/audit-logs": typeof AdminAuditLogsRoute;
+  "/admin/auth-config": typeof AdminAuthConfigRoute;
+  "/admin/branding-config": typeof AdminBrandingConfigRoute;
+  "/admin/database-config": typeof AdminDatabaseConfigRoute;
   "/setup/atlas": typeof SetupAtlasRoute;
   "/setup/auth": typeof SetupAuthRoute;
   "/setup/branding": typeof SetupBrandingRoute;
@@ -311,7 +350,11 @@ export interface FileRoutesById {
   "/setup": typeof SetupRouteWithChildren;
   "/_auth/login": typeof AuthLoginRoute;
   "/_main/activity": typeof MainActivityRoute;
+  "/admin/atlas-config": typeof AdminAtlasConfigRoute;
   "/admin/audit-logs": typeof AdminAuditLogsRoute;
+  "/admin/auth-config": typeof AdminAuthConfigRoute;
+  "/admin/branding-config": typeof AdminBrandingConfigRoute;
+  "/admin/database-config": typeof AdminDatabaseConfigRoute;
   "/setup/atlas": typeof SetupAtlasRoute;
   "/setup/auth": typeof SetupAuthRoute;
   "/setup/branding": typeof SetupBrandingRoute;
@@ -342,7 +385,11 @@ export interface FileRouteTypes {
     | "/setup"
     | "/login"
     | "/activity"
+    | "/admin/atlas-config"
     | "/admin/audit-logs"
+    | "/admin/auth-config"
+    | "/admin/branding-config"
+    | "/admin/database-config"
     | "/setup/atlas"
     | "/setup/auth"
     | "/setup/branding"
@@ -369,7 +416,11 @@ export interface FileRouteTypes {
   to:
     | "/login"
     | "/activity"
+    | "/admin/atlas-config"
     | "/admin/audit-logs"
+    | "/admin/auth-config"
+    | "/admin/branding-config"
+    | "/admin/database-config"
     | "/setup/atlas"
     | "/setup/auth"
     | "/setup/branding"
@@ -398,7 +449,11 @@ export interface FileRouteTypes {
     | "/setup"
     | "/_auth/login"
     | "/_main/activity"
+    | "/admin/atlas-config"
     | "/admin/audit-logs"
+    | "/admin/auth-config"
+    | "/admin/branding-config"
+    | "/admin/database-config"
     | "/setup/atlas"
     | "/setup/auth"
     | "/setup/branding"
@@ -434,6 +489,7 @@ export interface FileServerRoutesByFullPath {
   "/api/chunked-upload": typeof ApiChunkedUploadServerRoute;
   "/api/complete-upload": typeof ApiCompleteUploadServerRoute;
   "/api/get-chunked-upload-url": typeof ApiGetChunkedUploadUrlServerRoute;
+  "/api/get-template-upload-url": typeof ApiGetTemplateUploadUrlServerRoute;
   "/api/get-upload-url": typeof ApiGetUploadUrlServerRoute;
   "/api/template-upload": typeof ApiTemplateUploadServerRoute;
   "/api/upload": typeof ApiUploadServerRoute;
@@ -445,6 +501,7 @@ export interface FileServerRoutesByTo {
   "/api/chunked-upload": typeof ApiChunkedUploadServerRoute;
   "/api/complete-upload": typeof ApiCompleteUploadServerRoute;
   "/api/get-chunked-upload-url": typeof ApiGetChunkedUploadUrlServerRoute;
+  "/api/get-template-upload-url": typeof ApiGetTemplateUploadUrlServerRoute;
   "/api/get-upload-url": typeof ApiGetUploadUrlServerRoute;
   "/api/template-upload": typeof ApiTemplateUploadServerRoute;
   "/api/upload": typeof ApiUploadServerRoute;
@@ -457,6 +514,7 @@ export interface FileServerRoutesById {
   "/api/chunked-upload": typeof ApiChunkedUploadServerRoute;
   "/api/complete-upload": typeof ApiCompleteUploadServerRoute;
   "/api/get-chunked-upload-url": typeof ApiGetChunkedUploadUrlServerRoute;
+  "/api/get-template-upload-url": typeof ApiGetTemplateUploadUrlServerRoute;
   "/api/get-upload-url": typeof ApiGetUploadUrlServerRoute;
   "/api/template-upload": typeof ApiTemplateUploadServerRoute;
   "/api/upload": typeof ApiUploadServerRoute;
@@ -470,6 +528,7 @@ export interface FileServerRouteTypes {
     | "/api/chunked-upload"
     | "/api/complete-upload"
     | "/api/get-chunked-upload-url"
+    | "/api/get-template-upload-url"
     | "/api/get-upload-url"
     | "/api/template-upload"
     | "/api/upload"
@@ -481,6 +540,7 @@ export interface FileServerRouteTypes {
     | "/api/chunked-upload"
     | "/api/complete-upload"
     | "/api/get-chunked-upload-url"
+    | "/api/get-template-upload-url"
     | "/api/get-upload-url"
     | "/api/template-upload"
     | "/api/upload"
@@ -492,6 +552,7 @@ export interface FileServerRouteTypes {
     | "/api/chunked-upload"
     | "/api/complete-upload"
     | "/api/get-chunked-upload-url"
+    | "/api/get-template-upload-url"
     | "/api/get-upload-url"
     | "/api/template-upload"
     | "/api/upload"
@@ -504,6 +565,7 @@ export interface RootServerRouteChildren {
   ApiChunkedUploadServerRoute: typeof ApiChunkedUploadServerRoute;
   ApiCompleteUploadServerRoute: typeof ApiCompleteUploadServerRoute;
   ApiGetChunkedUploadUrlServerRoute: typeof ApiGetChunkedUploadUrlServerRoute;
+  ApiGetTemplateUploadUrlServerRoute: typeof ApiGetTemplateUploadUrlServerRoute;
   ApiGetUploadUrlServerRoute: typeof ApiGetUploadUrlServerRoute;
   ApiTemplateUploadServerRoute: typeof ApiTemplateUploadServerRoute;
   ApiUploadServerRoute: typeof ApiUploadServerRoute;
@@ -590,11 +652,39 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof SetupAtlasRouteImport;
       parentRoute: typeof SetupRoute;
     };
+    "/admin/database-config": {
+      id: "/admin/database-config";
+      path: "/database-config";
+      fullPath: "/admin/database-config";
+      preLoaderRoute: typeof AdminDatabaseConfigRouteImport;
+      parentRoute: typeof AdminRoute;
+    };
+    "/admin/branding-config": {
+      id: "/admin/branding-config";
+      path: "/branding-config";
+      fullPath: "/admin/branding-config";
+      preLoaderRoute: typeof AdminBrandingConfigRouteImport;
+      parentRoute: typeof AdminRoute;
+    };
+    "/admin/auth-config": {
+      id: "/admin/auth-config";
+      path: "/auth-config";
+      fullPath: "/admin/auth-config";
+      preLoaderRoute: typeof AdminAuthConfigRouteImport;
+      parentRoute: typeof AdminRoute;
+    };
     "/admin/audit-logs": {
       id: "/admin/audit-logs";
       path: "/audit-logs";
       fullPath: "/admin/audit-logs";
       preLoaderRoute: typeof AdminAuditLogsRouteImport;
+      parentRoute: typeof AdminRoute;
+    };
+    "/admin/atlas-config": {
+      id: "/admin/atlas-config";
+      path: "/atlas-config";
+      fullPath: "/admin/atlas-config";
+      preLoaderRoute: typeof AdminAtlasConfigRouteImport;
       parentRoute: typeof AdminRoute;
     };
     "/_main/activity": {
@@ -748,6 +838,13 @@ declare module "@tanstack/react-start/server" {
       preLoaderRoute: typeof ApiGetUploadUrlServerRouteImport;
       parentRoute: typeof rootServerRouteImport;
     };
+    "/api/get-template-upload-url": {
+      id: "/api/get-template-upload-url";
+      path: "/api/get-template-upload-url";
+      fullPath: "/api/get-template-upload-url";
+      preLoaderRoute: typeof ApiGetTemplateUploadUrlServerRouteImport;
+      parentRoute: typeof rootServerRouteImport;
+    };
     "/api/get-chunked-upload-url": {
       id: "/api/get-chunked-upload-url";
       path: "/api/get-chunked-upload-url";
@@ -857,12 +954,20 @@ const MainRouteChildren: MainRouteChildren = {
 const MainRouteWithChildren = MainRoute._addFileChildren(MainRouteChildren);
 
 interface AdminRouteChildren {
+  AdminAtlasConfigRoute: typeof AdminAtlasConfigRoute;
   AdminAuditLogsRoute: typeof AdminAuditLogsRoute;
+  AdminAuthConfigRoute: typeof AdminAuthConfigRoute;
+  AdminBrandingConfigRoute: typeof AdminBrandingConfigRoute;
+  AdminDatabaseConfigRoute: typeof AdminDatabaseConfigRoute;
   AdminIndexRoute: typeof AdminIndexRoute;
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAtlasConfigRoute: AdminAtlasConfigRoute,
   AdminAuditLogsRoute: AdminAuditLogsRoute,
+  AdminAuthConfigRoute: AdminAuthConfigRoute,
+  AdminBrandingConfigRoute: AdminBrandingConfigRoute,
+  AdminDatabaseConfigRoute: AdminDatabaseConfigRoute,
   AdminIndexRoute: AdminIndexRoute,
 };
 
@@ -900,6 +1005,7 @@ const rootServerRouteChildren: RootServerRouteChildren = {
   ApiChunkedUploadServerRoute: ApiChunkedUploadServerRoute,
   ApiCompleteUploadServerRoute: ApiCompleteUploadServerRoute,
   ApiGetChunkedUploadUrlServerRoute: ApiGetChunkedUploadUrlServerRoute,
+  ApiGetTemplateUploadUrlServerRoute: ApiGetTemplateUploadUrlServerRoute,
   ApiGetUploadUrlServerRoute: ApiGetUploadUrlServerRoute,
   ApiTemplateUploadServerRoute: ApiTemplateUploadServerRoute,
   ApiUploadServerRoute: ApiUploadServerRoute,

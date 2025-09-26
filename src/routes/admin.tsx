@@ -5,7 +5,7 @@ import {
   redirect,
   useLocation,
 } from "@tanstack/react-router";
-import { BarChart3, FileText, Shield, Users } from "lucide-react";
+import { BarChart3, FileText, Shield, Users, Database, Globe, Palette, Settings } from "lucide-react";
 
 import { setupStatusQueryOptions } from "@/hooks/queries/use-setup-status-query";
 import { useSetupStatus } from "@/hooks/use-setup-status";
@@ -26,6 +26,32 @@ const adminNavItems = [
     title: "Audit Logs",
     href: "/admin/audit-logs",
     icon: FileText,
+  },
+  {
+    title: "Configuration",
+    icon: Settings,
+    children: [
+      {
+        title: "Database",
+        href: "/admin/database-config",
+        icon: Database,
+      },
+      {
+        title: "Authentication",
+        href: "/admin/auth-config",
+        icon: Shield,
+      },
+      {
+        title: "Atlas API",
+        href: "/admin/atlas-config",
+        icon: Globe,
+      },
+      {
+        title: "Branding",
+        href: "/admin/branding-config",
+        icon: Palette,
+      },
+    ],
   },
 ];
 
@@ -49,6 +75,46 @@ const RouteComponent = () => {
           <ul className="space-y-2">
             {adminNavItems.map((item) => {
               const Icon = item.icon;
+
+              if (item.children) {
+                return (
+                  <li key={item.title}>
+                    <div className="mb-2">
+                      <div className="flex items-center gap-2 px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">
+                        <Icon className="h-3 w-3" />
+                        {item.title}
+                      </div>
+                    </div>
+                    <ul className="ml-3 space-y-1">
+                      {item.children.map((child) => {
+                        const ChildIcon = child.icon;
+                        const isActive =
+                          location.pathname === child.href ||
+                          (child.href !== "/admin" &&
+                            location.pathname.startsWith(child.href));
+
+                        return (
+                          <li key={child.href}>
+                            <Link
+                              to={child.href}
+                              className={cn(
+                                "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                                isActive
+                                  ? "bg-primary text-primary-foreground"
+                                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                              )}
+                            >
+                              <ChildIcon className="h-4 w-4" />
+                              {child.title}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </li>
+                );
+              }
+
               const isActive =
                 location.pathname === item.href ||
                 (item.href !== "/admin" &&
@@ -81,12 +147,20 @@ const RouteComponent = () => {
           <div className="flex h-full items-center px-6">
             <div className="flex items-center gap-4">
               <h2 className="text-xl font-semibold">
-                {adminNavItems.find(
-                  (item) =>
-                    location.pathname === item.href ||
-                    (item.href !== "/admin" &&
-                      location.pathname.startsWith(item.href))
-                )?.title || "Dashboard"}
+                {(() => {
+                  for (const item of adminNavItems) {
+                    if (item.href && location.pathname === item.href) {
+                      return item.title;
+                    }
+                    if (item.children) {
+                      const child = item.children.find(
+                        (c) => location.pathname === c.href
+                      );
+                      if (child) return child.title;
+                    }
+                  }
+                  return "Dashboard";
+                })()}
               </h2>
             </div>
           </div>
