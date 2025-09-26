@@ -420,15 +420,16 @@ const AuthPage = () => {
                     onChange={(e) => {
                       const scopes = e.target.value
                         .split(" ")
-                        .map(s => s.trim())
-                        .filter(s => s.length > 0);
+                        .map((s) => s.trim())
+                        .filter((s) => s.length > 0);
                       field.onChange(scopes);
                       updateOIDCConfig({ scopes });
                     }}
                   />
                 </FormControl>
                 <FormDescription>
-                  Space-separated list of OAuth scopes to request from the provider
+                  Space-separated list of OAuth scopes to request from the
+                  provider
                 </FormDescription>
                 <FormMessage />
               </FormItem>

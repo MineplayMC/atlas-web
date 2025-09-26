@@ -16,6 +16,7 @@ interface OIDCConfig {
   authorizationUrl: string;
   tokenUrl: string;
   userInfoUrl: string;
+  scopes: string[];
 }
 
 interface AtlasConfig {
@@ -75,6 +76,7 @@ export const SetupProvider: React.FC<{ children: ReactNode }> = ({
       authorizationUrl: "https://discord.com/api/oauth2/authorize",
       tokenUrl: "https://discord.com/api/oauth2/token",
       userInfoUrl: "https://discord.com/api/users/@me",
+      scopes: ["identify", "email"],
     },
     atlasConfig: {
       baseUrl: "",
