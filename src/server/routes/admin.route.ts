@@ -201,6 +201,7 @@ const updateBrandingConfig = os
     z.object({
       displayName: z.string(),
       logo: z.string().optional(),
+      favicon: z.string().optional(),
       primaryColor: z.string(),
       backgroundImage: z.string().optional(),
     })
