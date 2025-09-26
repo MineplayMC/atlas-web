@@ -26,6 +26,7 @@ function createAuth() {
       accountLinking: {
         enabled: true,
         trustedProviders: ["identity"],
+        allowDifferentEmails: true,
       },
     },
     plugins: [
