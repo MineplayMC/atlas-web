@@ -13,10 +13,32 @@ const RouteComponent = () => {
   const handleIdentitySignIn = async () => {
     try {
       setIsIdentityLoading(true);
-      await authClient.signIn.social({
-        provider: "identity",
-        callbackURL: "/",
-      });
+      switch (config.config?.oidcConfig.providerName) {
+        case "discord":
+          await authClient.signIn.social({
+            provider: "discord",
+            callbackURL: "/",
+          });
+          break;
+        case "github":
+          await authClient.signIn.social({
+            provider: "github",
+            callbackURL: "/",
+          });
+          break;
+        case "google":
+          await authClient.signIn.social({
+            provider: "google",
+            callbackURL: "/",
+          });
+          break;
+        default:
+          await authClient.signIn.social({
+            provider: "identity",
+            callbackURL: "/",
+          });
+          break;
+      }
     } catch (error) {
       console.error(error, "Error during Identity sign in");
       toast.error(
