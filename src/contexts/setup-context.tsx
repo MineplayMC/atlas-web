@@ -28,6 +28,7 @@ interface AtlasConfig {
 interface BrandingConfig {
   displayName: string;
   logo: string;
+  favicon: string;
   primaryColor: string;
   backgroundImage: string;
 }
@@ -86,6 +87,7 @@ export const SetupProvider: React.FC<{ children: ReactNode }> = ({
     brandingConfig: {
       displayName: "Atlas",
       logo: "/logo.png",
+      favicon: "/favicon.ico",
       primaryColor: "#3b82f6",
       backgroundImage: "/bg-darker.jpg",
     },
