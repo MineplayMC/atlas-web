@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { genericOAuth } from "better-auth/plugins";
+import { admin, genericOAuth } from "better-auth/plugins";
 
 import { db } from "@/db";
 import configManager from "@/server/lib/config-manager";
@@ -37,6 +37,9 @@ function createAuth() {
       },
     },
     plugins: [
+      admin({
+        adminRoles: ["admin"],
+      }),
       genericOAuth({
         config: [
           {

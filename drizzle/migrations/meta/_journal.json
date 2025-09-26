@@ -15,6 +15,20 @@
       "when": 1755383959630,
       "tag": "0001_majestic_moondragon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1758915169970,
+      "tag": "0002_cloudy_talos",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1758915533299,
+      "tag": "0003_jazzy_nocturne",
+      "breakpoints": true
     }
   ]
 }

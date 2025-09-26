@@ -3,10 +3,11 @@ import fs from "fs";
 import path from "path";
 import postgres from "postgres";
 import { z } from "zod";
+import { getWebRequest } from "@tanstack/react-start/server";
 
 import { reconnectDatabase } from "@/db";
 import { createAtlasClient } from "@/server/lib/atlas-api/atlas-api.client";
-import { resetAuth } from "@/server/lib/auth";
+import { auth, resetAuth } from "@/server/lib/auth";
 import configManager from "@/server/lib/config-manager";
 
 const CONFIG_DIR = path.join(process.cwd(), "config");
@@ -18,7 +19,37 @@ function ensureConfigDir() {
   }
 }
 
+async function requireAdmin() {
+  const request = getWebRequest();
+
+  const session = await auth.api.getSession({
+    headers: request?.headers ?? new Headers(),
+  });
+
+  if (!session?.user) {
+    throw new ORPCError("UNAUTHORIZED", {
+      message: "Authentication required",
+    });
+  }
+
+  // Use Better Auth admin API - try to access admin function to check permissions
+  try {
+    await (auth.api as any).listUsers({
+      headers: request?.headers ?? new Headers(),
+      query: {},
+    });
+  } catch {
+    throw new ORPCError("FORBIDDEN", {
+      message: "Admin role required",
+    });
+  }
+
+  return session.user;
+}
+
 const getConfig = os.handler(async () => {
+  await requireAdmin();
+
   try {
     if (!fs.existsSync(CONFIG_FILE)) {
       throw new ORPCError("NOT_FOUND", {
@@ -70,6 +101,8 @@ const updateDatabaseConfig = os
     })
   )
   .handler(async ({ input }) => {
+    await requireAdmin();
+
     try {
       ensureConfigDir();
 
@@ -117,6 +150,8 @@ const updateAuthConfig = os
     })
   )
   .handler(async ({ input }) => {
+    await requireAdmin();
+
     try {
       ensureConfigDir();
 
@@ -159,6 +194,8 @@ const updateAtlasConfig = os
     })
   )
   .handler(async ({ input }) => {
+    await requireAdmin();
+
     try {
       ensureConfigDir();
 
@@ -207,6 +244,8 @@ const updateBrandingConfig = os
     })
   )
   .handler(async ({ input }) => {
+    await requireAdmin();
+
     try {
       ensureConfigDir();
 
@@ -250,6 +289,8 @@ const testDatabaseConnection = os
     })
   )
   .handler(async ({ input }) => {
+    await requireAdmin();
+
     try {
       const sql = postgres({
         host: input.host,
@@ -289,6 +330,8 @@ const testOidcConnection = os
     })
   )
   .handler(async ({ input }) => {
+    await requireAdmin();
+
     try {
       const urls = [input.authorizationUrl, input.tokenUrl, input.userInfoUrl];
 
@@ -337,6 +380,8 @@ const testAtlasConnection = os
     })
   )
   .handler(async ({ input }) => {
+    await requireAdmin();
+
     try {
       const atlasClient = createAtlasClient(input.baseUrl, input.apiKey);
       const status = await atlasClient.getStatus();
@@ -355,6 +400,149 @@ const testAtlasConnection = os
     }
   });
 
+const listUsers = os.handler(async () => {
+  const request = getWebRequest();
+
+  try {
+    // Use Better Auth admin API to list users
+    const result = await (auth.api as any).listUsers({
+      headers: request?.headers ?? new Headers(),
+      query: {},
+    });
+
+    // Better Auth might return the users in a nested property
+    const users = Array.isArray(result) ? result : result?.users || [];
+
+    return users;
+  } catch (error) {
+    throw new ORPCError("INTERNAL_ERROR", {
+      message: `Failed to fetch users: ${error instanceof Error ? error.message : "Unknown error"}`,
+    });
+  }
+});
+
+const updateUserRole = os
+  .input(
+    z.object({
+      userId: z.string(),
+      role: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    await requireAdmin();
+    const request = getWebRequest();
+
+    try {
+      await (auth.api as any).setRole({
+        headers: request?.headers ?? new Headers(),
+        body: {
+          userId: input.userId,
+          role: input.role,
+        },
+      });
+
+      return {
+        success: true,
+        message: "User role updated successfully",
+      };
+    } catch (error) {
+      throw new ORPCError("INTERNAL_ERROR", {
+        message: `Failed to update user role: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
+    }
+  });
+
+const banUser = os
+  .input(
+    z.object({
+      userId: z.string(),
+      reason: z.string().optional(),
+      expiresAt: z.string().optional(),
+    })
+  )
+  .handler(async ({ input }) => {
+    await requireAdmin();
+    const request = getWebRequest();
+
+    try {
+      await (auth.api as any).banUser({
+        headers: request?.headers ?? new Headers(),
+        body: {
+          userId: input.userId,
+          reason: input.reason,
+          expiresAt: input.expiresAt,
+        },
+      });
+
+      return {
+        success: true,
+        message: "User banned successfully",
+      };
+    } catch (error) {
+      throw new ORPCError("INTERNAL_ERROR", {
+        message: `Failed to ban user: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
+    }
+  });
+
+const unbanUser = os
+  .input(
+    z.object({
+      userId: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    await requireAdmin();
+    const request = getWebRequest();
+
+    try {
+      await (auth.api as any).unbanUser({
+        headers: request?.headers ?? new Headers(),
+        body: {
+          userId: input.userId,
+        },
+      });
+
+      return {
+        success: true,
+        message: "User unbanned successfully",
+      };
+    } catch (error) {
+      throw new ORPCError("INTERNAL_ERROR", {
+        message: `Failed to unban user: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
+    }
+  });
+
+const deleteUser = os
+  .input(
+    z.object({
+      userId: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    await requireAdmin();
+    const request = getWebRequest();
+
+    try {
+      await (auth.api as any).removeUser({
+        headers: request?.headers ?? new Headers(),
+        body: {
+          userId: input.userId,
+        },
+      });
+
+      return {
+        success: true,
+        message: "User deleted successfully",
+      };
+    } catch (error) {
+      throw new ORPCError("INTERNAL_ERROR", {
+        message: `Failed to delete user: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
+    }
+  });
+
 export default {
   getConfig,
   updateDatabaseConfig,
@@ -364,4 +552,9 @@ export default {
   testDatabaseConnection,
   testOidcConnection,
   testAtlasConnection,
+  listUsers,
+  updateUserRole,
+  banUser,
+  unbanUser,
+  deleteUser,
 };

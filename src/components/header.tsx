@@ -18,8 +18,10 @@ const Header = React.memo(() => {
   const { data: session } = useAuthedQuery();
   const config = useSetupStatus();
 
-  const links = useMemo(
-    () => [
+  const userRole = (session.user as any).role;
+
+  const links = useMemo(() => {
+    const baseLinks = [
       {
         name: "Overview",
         icon: LayoutDashboardIcon,
@@ -40,14 +42,19 @@ const Header = React.memo(() => {
         icon: FileText,
         to: "/templates",
       },
-      {
+    ];
+
+    // Only show Admin link for admin users
+    if (userRole === "admin") {
+      baseLinks.push({
         name: "Admin",
         icon: Settings,
         to: "/admin",
-      },
-    ],
-    []
-  );
+      });
+    }
+
+    return baseLinks;
+  }, [userRole]);
 
   const handleSignOut = useCallback(() => {
     authClient.signOut();

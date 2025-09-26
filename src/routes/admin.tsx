@@ -180,6 +180,11 @@ export const Route = createFileRoute("/admin")({
       return redirect({ to: "/login" });
     }
 
+    // Check if user has admin role
+    if ((context.auth.user as any).role !== "admin") {
+      throw new Error("Access denied: Admin role required");
+    }
+
     const setupStatus = await context.queryClient.ensureQueryData(
       setupStatusQueryOptions()
     );

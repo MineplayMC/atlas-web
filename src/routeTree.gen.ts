@@ -22,6 +22,7 @@ import { Route as SetupDatabaseRouteImport } from "./routes/setup/database";
 import { Route as SetupBrandingRouteImport } from "./routes/setup/branding";
 import { Route as SetupAuthRouteImport } from "./routes/setup/auth";
 import { Route as SetupAtlasRouteImport } from "./routes/setup/atlas";
+import { Route as AdminUsersRouteImport } from "./routes/admin/users";
 import { Route as AdminDatabaseConfigRouteImport } from "./routes/admin/database-config";
 import { Route as AdminBrandingConfigRouteImport } from "./routes/admin/branding-config";
 import { Route as AdminAuthConfigRouteImport } from "./routes/admin/auth-config";
@@ -109,6 +110,11 @@ const SetupAtlasRoute = SetupAtlasRouteImport.update({
   id: "/atlas",
   path: "/atlas",
   getParentRoute: () => SetupRoute,
+} as any);
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: "/users",
+  path: "/users",
+  getParentRoute: () => AdminRoute,
 } as any);
 const AdminDatabaseConfigRoute = AdminDatabaseConfigRouteImport.update({
   id: "/database-config",
@@ -290,6 +296,7 @@ export interface FileRoutesByFullPath {
   "/admin/auth-config": typeof AdminAuthConfigRoute;
   "/admin/branding-config": typeof AdminBrandingConfigRoute;
   "/admin/database-config": typeof AdminDatabaseConfigRoute;
+  "/admin/users": typeof AdminUsersRoute;
   "/setup/atlas": typeof SetupAtlasRoute;
   "/setup/auth": typeof SetupAuthRoute;
   "/setup/branding": typeof SetupBrandingRoute;
@@ -321,6 +328,7 @@ export interface FileRoutesByTo {
   "/admin/auth-config": typeof AdminAuthConfigRoute;
   "/admin/branding-config": typeof AdminBrandingConfigRoute;
   "/admin/database-config": typeof AdminDatabaseConfigRoute;
+  "/admin/users": typeof AdminUsersRoute;
   "/setup/atlas": typeof SetupAtlasRoute;
   "/setup/auth": typeof SetupAuthRoute;
   "/setup/branding": typeof SetupBrandingRoute;
@@ -355,6 +363,7 @@ export interface FileRoutesById {
   "/admin/auth-config": typeof AdminAuthConfigRoute;
   "/admin/branding-config": typeof AdminBrandingConfigRoute;
   "/admin/database-config": typeof AdminDatabaseConfigRoute;
+  "/admin/users": typeof AdminUsersRoute;
   "/setup/atlas": typeof SetupAtlasRoute;
   "/setup/auth": typeof SetupAuthRoute;
   "/setup/branding": typeof SetupBrandingRoute;
@@ -390,6 +399,7 @@ export interface FileRouteTypes {
     | "/admin/auth-config"
     | "/admin/branding-config"
     | "/admin/database-config"
+    | "/admin/users"
     | "/setup/atlas"
     | "/setup/auth"
     | "/setup/branding"
@@ -421,6 +431,7 @@ export interface FileRouteTypes {
     | "/admin/auth-config"
     | "/admin/branding-config"
     | "/admin/database-config"
+    | "/admin/users"
     | "/setup/atlas"
     | "/setup/auth"
     | "/setup/branding"
@@ -454,6 +465,7 @@ export interface FileRouteTypes {
     | "/admin/auth-config"
     | "/admin/branding-config"
     | "/admin/database-config"
+    | "/admin/users"
     | "/setup/atlas"
     | "/setup/auth"
     | "/setup/branding"
@@ -651,6 +663,13 @@ declare module "@tanstack/react-router" {
       fullPath: "/setup/atlas";
       preLoaderRoute: typeof SetupAtlasRouteImport;
       parentRoute: typeof SetupRoute;
+    };
+    "/admin/users": {
+      id: "/admin/users";
+      path: "/users";
+      fullPath: "/admin/users";
+      preLoaderRoute: typeof AdminUsersRouteImport;
+      parentRoute: typeof AdminRoute;
     };
     "/admin/database-config": {
       id: "/admin/database-config";
@@ -959,6 +978,7 @@ interface AdminRouteChildren {
   AdminAuthConfigRoute: typeof AdminAuthConfigRoute;
   AdminBrandingConfigRoute: typeof AdminBrandingConfigRoute;
   AdminDatabaseConfigRoute: typeof AdminDatabaseConfigRoute;
+  AdminUsersRoute: typeof AdminUsersRoute;
   AdminIndexRoute: typeof AdminIndexRoute;
 }
 
@@ -968,6 +988,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuthConfigRoute: AdminAuthConfigRoute,
   AdminBrandingConfigRoute: AdminBrandingConfigRoute,
   AdminDatabaseConfigRoute: AdminDatabaseConfigRoute,
+  AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 };
 

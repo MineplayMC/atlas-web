@@ -1,5 +1,5 @@
 import { createIsomorphicFn } from "@tanstack/react-start";
-import { genericOAuthClient } from "better-auth/client/plugins";
+import { adminClient, genericOAuthClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 import { authQueryOptions } from "@/features/auth/services/auth.query";
@@ -20,5 +20,5 @@ export const authClient = createAuthClient({
       await window.getRouter().invalidate();
     },
   },
-  plugins: [genericOAuthClient()],
+  plugins: [genericOAuthClient(), adminClient()],
 });
