@@ -30,6 +30,7 @@ import { orpc } from "@/lib/orpc";
 const brandingSchema = z.object({
   displayName: z.string().min(1, "Display name is required"),
   logo: z.string().optional(),
+  favicon: z.string().optional(),
   primaryColor: z.string().regex(
     /^#[0-9A-F]{6}$/i,
     "Must be a valid hex color (e.g., #FF6A3D)"
@@ -91,6 +92,7 @@ const RouteComponent = () => {
     defaultValues: {
       displayName: currentConfig?.brandingConfig?.displayName || "Atlas",
       logo: currentConfig?.brandingConfig?.logo || "/logo.png",
+      favicon: currentConfig?.brandingConfig?.favicon || "/favicon.ico",
       primaryColor: currentConfig?.brandingConfig?.primaryColor
         ? convertFromHslValues(currentConfig.brandingConfig.primaryColor)
         : "#FF6A3D",
@@ -164,6 +166,23 @@ const RouteComponent = () => {
                     </FormControl>
                     <FormDescription>
                       URL or path to your logo image
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="favicon"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Favicon URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="/favicon.ico" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      URL or path to your favicon (supports .ico, .png, .svg)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

@@ -32,6 +32,7 @@ interface SetupConfig {
   brandingConfig: {
     displayName: string;
     logo?: string;
+    favicon?: string;
     primaryColor: string;
     backgroundImage?: string;
   };

@@ -20,6 +20,7 @@ import { useSetup } from "@/contexts/setup-context";
 const brandingSchema = z.object({
   displayName: z.string().min(1, "Display name is required"),
   logo: z.string().optional(),
+  favicon: z.string().optional(),
   primaryColor: z
     .string()
     .regex(/^#[0-9A-F]{6}$/i, "Must be a valid hex color"),
@@ -49,11 +50,15 @@ const BrandingPage = () => {
   const [logoUrlInput, setLogoUrlInput] = useState(
     state.brandingConfig.logo || ""
   );
+  const [faviconUrlInput, setFaviconUrlInput] = useState(
+    state.brandingConfig.favicon || ""
+  );
   const [backgroundUrlInput, setBackgroundUrlInput] = useState(
     state.brandingConfig.backgroundImage || ""
   );
 
   const debouncedLogoUrl = useDebounce(logoUrlInput, 500);
+  const debouncedFaviconUrl = useDebounce(faviconUrlInput, 500);
   const debouncedBackgroundUrl = useDebounce(backgroundUrlInput, 500);
 
   useEffect(() => {
@@ -68,6 +73,7 @@ const BrandingPage = () => {
   useEffect(() => {
     form.reset(state.brandingConfig);
     setLogoUrlInput(state.brandingConfig.logo || "");
+    setFaviconUrlInput(state.brandingConfig.favicon || "");
     setBackgroundUrlInput(state.brandingConfig.backgroundImage || "");
   }, [form, state.brandingConfig]);
 
@@ -149,6 +155,50 @@ const BrandingPage = () => {
                   </FormControl>
                   <FormDescription>
                     URL to your organization's logo image
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="favicon"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Favicon URL</FormLabel>
+                  <FormControl>
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="https://example.com/favicon.ico"
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          setFaviconUrlInput(e.target.value);
+                          updateBrandingConfig({ favicon: e.target.value });
+                        }}
+                      />
+                      {debouncedFaviconUrl && (
+                        <div className="bg-muted flex items-center justify-center rounded-lg p-4">
+                          <img
+                            src={debouncedFaviconUrl}
+                            alt="Favicon preview"
+                            className="h-8 w-8 object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display =
+                                "none";
+                            }}
+                            onLoad={(e) => {
+                              (e.target as HTMLImageElement).style.display =
+                                "block";
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    URL to your favicon image (supports .ico, .png, .svg)
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

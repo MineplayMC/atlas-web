@@ -77,50 +77,71 @@ export const Route = createRootRouteWithContext<{
 }>()({
   beforeLoad: async ({ context }) => {
     const auth = await context.queryClient.ensureQueryData(authQueryOptions());
-    await context.queryClient.ensureQueryData(setupStatusQueryOptions());
+    const config = await context.queryClient.ensureQueryData(
+      setupStatusQueryOptions()
+    );
 
     return {
       auth,
+      config,
     };
   },
-  head: () => ({
-    meta: [
-      {
-        charSet: "utf-8",
-      },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
-      },
-      ...seo({
-        title: "Atlas | Game Server Management Dashboard",
-        description:
-          "Atlas is a comprehensive game server management platform providing real-time monitoring, auto-scaling, and administration capabilities for gaming networks and server infrastructure.",
-      }),
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      {
-        rel: "apple-touch-icon",
-        sizes: "180x180",
-        href: "/apple-touch-icon.png",
-      },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "32x32",
-        href: "/favicon-32x32.png",
-      },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "16x16",
-        href: "/favicon-16x16.png",
-      },
-      { rel: "manifest", href: "/site.webmanifest", color: "#fffff" },
-      { rel: "icon", href: "/favicon.ico" },
-    ],
-  }),
+  loader: async ({ context }) => {
+    return {
+      auth: context.auth,
+      config: context.config,
+    };
+  },
+  head: ({ loaderData }) => {
+    const favicon =
+      loaderData?.config?.config?.brandingConfig?.favicon || "/favicon.ico";
+    const faviconExtension = favicon.split(".").pop()?.toLowerCase();
+    const mimeType =
+      faviconExtension === "svg"
+        ? "image/svg+xml"
+        : faviconExtension === "png"
+          ? "image/png"
+          : "image/x-icon";
+
+    return {
+      meta: [
+        {
+          charSet: "utf-8",
+        },
+        {
+          name: "viewport",
+          content: "width=device-width, initial-scale=1",
+        },
+        ...seo({
+          title: "Atlas | Game Server Management Dashboard",
+          description:
+            "Atlas is a comprehensive game server management platform providing real-time monitoring, auto-scaling, and administration capabilities for gaming networks and server infrastructure.",
+        }),
+      ],
+      links: [
+        { rel: "stylesheet", href: appCss },
+        {
+          rel: "apple-touch-icon",
+          sizes: "180x180",
+          href: favicon,
+        },
+        {
+          rel: "icon",
+          type: mimeType,
+          sizes: "32x32",
+          href: favicon,
+        },
+        {
+          rel: "icon",
+          type: mimeType,
+          sizes: "16x16",
+          href: favicon,
+        },
+        { rel: "manifest", href: "/site.webmanifest", color: "#fffff" },
+        { rel: "icon", href: favicon, type: mimeType },
+      ],
+    };
+  },
   errorComponent: (props) => {
     return (
       <RootLayout>

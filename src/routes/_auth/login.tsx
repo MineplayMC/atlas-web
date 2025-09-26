@@ -53,7 +53,7 @@ const RouteComponent = () => {
     <div className="bg-card mx-auto max-w-lg rounded-lg p-12 shadow-lg">
       <div className="mb-12 text-center">
         <img
-          src="/logo.png"
+          src={config.config?.brandingConfig?.logo || "/logo.png"}
           alt={config.config?.brandingConfig?.displayName || "Atlas"}
           className="mx-auto mb-6 h-20 w-20"
         />
