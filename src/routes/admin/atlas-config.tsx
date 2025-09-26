@@ -47,22 +47,11 @@ const RouteComponent = () => {
   const form = useForm<AtlasFormValues>({
     resolver: zodResolver(atlasSchema),
     defaultValues: {
-      baseUrl: window.location.origin,
-      atlasUrl: "",
+      baseUrl: currentConfig?.atlasConfig?.baseUrl || window.location.origin,
+      atlasUrl: currentConfig?.atlasConfig?.atlasUrl || "",
       atlasApiKey: "",
     },
   });
-
-  // Reset form when config loads
-  React.useEffect(() => {
-    if (currentConfig?.atlasConfig) {
-      form.reset({
-        baseUrl: currentConfig.atlasConfig.baseUrl || window.location.origin,
-        atlasUrl: currentConfig.atlasConfig.atlasUrl || "",
-        atlasApiKey: "",
-      });
-    }
-  }, [currentConfig, form]);
 
   const testConnection = useMutation(
     orpc.admin.testAtlasConnection.mutationOptions({
@@ -241,5 +230,10 @@ const RouteComponent = () => {
 };
 
 export const Route = createFileRoute("/admin/atlas-config")({
+  loader: async ({ context }) => {
+    return await context.queryClient.ensureQueryData(
+      orpc.admin.getConfig.queryOptions()
+    );
+  },
   component: RouteComponent,
 });

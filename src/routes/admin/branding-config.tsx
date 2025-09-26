@@ -42,10 +42,16 @@ type BrandingFormValues = z.infer<typeof brandingSchema>;
 const RouteComponent = () => {
   const { data: currentConfig } = useQuery(orpc.admin.getConfig.queryOptions());
 
-  const convertFromHslValues = (hslValues: string): string => {
-    if (!hslValues) return "#FF6A3D";
+  const convertFromHslValues = (color: string): string => {
+    if (!color) return "#FF6A3D";
 
-    const match = hslValues.match(/(\d+),\s*(\d+)%,\s*(\d+)%/);
+    // If it's already a hex color, return it
+    if (color.startsWith("#")) {
+      return color;
+    }
+
+    // Parse HSL format like "30, 56%, 65%"
+    const match = color.match(/(\d+),\s*(\d+)%,\s*(\d+)%/);
     if (!match) return "#FF6A3D";
 
     const h = parseInt(match[1]) / 360;
@@ -83,26 +89,14 @@ const RouteComponent = () => {
   const form = useForm<BrandingFormValues>({
     resolver: zodResolver(brandingSchema),
     defaultValues: {
-      displayName: "Atlas",
-      logo: "/logo.png",
-      primaryColor: "#FF6A3D",
-      backgroundImage: "",
+      displayName: currentConfig?.brandingConfig?.displayName || "Atlas",
+      logo: currentConfig?.brandingConfig?.logo || "/logo.png",
+      primaryColor: currentConfig?.brandingConfig?.primaryColor
+        ? convertFromHslValues(currentConfig.brandingConfig.primaryColor)
+        : "#FF6A3D",
+      backgroundImage: currentConfig?.brandingConfig?.backgroundImage || "",
     },
   });
-
-  // Reset form when config loads
-  React.useEffect(() => {
-    if (currentConfig?.brandingConfig) {
-      form.reset({
-        displayName: currentConfig.brandingConfig.displayName || "Atlas",
-        logo: currentConfig.brandingConfig.logo || "/logo.png",
-        primaryColor: currentConfig.brandingConfig.primaryColor
-          ? convertFromHslValues(currentConfig.brandingConfig.primaryColor)
-          : "#FF6A3D",
-        backgroundImage: currentConfig.brandingConfig.backgroundImage || "",
-      });
-    }
-  }, [currentConfig, form]);
 
   const updateConfig = useMutation(
     orpc.admin.updateBrandingConfig.mutationOptions({
@@ -262,5 +256,10 @@ const RouteComponent = () => {
 };
 
 export const Route = createFileRoute("/admin/branding-config")({
+  loader: async ({ context }) => {
+    return await context.queryClient.ensureQueryData(
+      orpc.admin.getConfig.queryOptions()
+    );
+  },
   component: RouteComponent,
 });

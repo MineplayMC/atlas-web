@@ -48,26 +48,13 @@ const RouteComponent = () => {
   const form = useForm<DatabaseFormValues>({
     resolver: zodResolver(databaseSchema),
     defaultValues: {
-      host: "localhost",
-      port: 5432,
-      database: "atlas",
-      username: "postgres",
+      host: currentConfig?.postgresConfig?.host || "localhost",
+      port: currentConfig?.postgresConfig?.port || 5432,
+      database: currentConfig?.postgresConfig?.database || "atlas",
+      username: currentConfig?.postgresConfig?.username || "postgres",
       password: "",
     },
   });
-
-  // Reset form when config loads
-  React.useEffect(() => {
-    if (currentConfig?.postgresConfig) {
-      form.reset({
-        host: currentConfig.postgresConfig.host || "localhost",
-        port: currentConfig.postgresConfig.port || 5432,
-        database: currentConfig.postgresConfig.database || "atlas",
-        username: currentConfig.postgresConfig.username || "postgres",
-        password: "",
-      });
-    }
-  }, [currentConfig, form]);
 
   const testConnection = useMutation(
     orpc.admin.testDatabaseConnection.mutationOptions({
@@ -270,5 +257,10 @@ const RouteComponent = () => {
 };
 
 export const Route = createFileRoute("/admin/database-config")({
+  loader: async ({ context }) => {
+    return await context.queryClient.ensureQueryData(
+      orpc.admin.getConfig.queryOptions()
+    );
+  },
   component: RouteComponent,
 });

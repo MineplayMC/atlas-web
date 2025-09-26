@@ -57,30 +57,15 @@ const RouteComponent = () => {
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(authSchema),
     defaultValues: {
-      provider: "oidc",
-      providerName: "",
-      clientId: "",
+      provider: currentConfig?.oidcConfig?.provider || "custom",
+      providerName: currentConfig?.oidcConfig?.providerName || "",
+      clientId: currentConfig?.oidcConfig?.clientId || "",
       clientSecret: "",
-      authorizationUrl: "",
-      tokenUrl: "",
-      userInfoUrl: "",
+      authorizationUrl: currentConfig?.oidcConfig?.authorizationUrl || "",
+      tokenUrl: currentConfig?.oidcConfig?.tokenUrl || "",
+      userInfoUrl: currentConfig?.oidcConfig?.userInfoUrl || "",
     },
   });
-
-  // Reset form when config loads
-  React.useEffect(() => {
-    if (currentConfig?.oidcConfig) {
-      form.reset({
-        provider: currentConfig.oidcConfig.provider || "oidc",
-        providerName: currentConfig.oidcConfig.providerName || "",
-        clientId: currentConfig.oidcConfig.clientId || "",
-        clientSecret: "",
-        authorizationUrl: currentConfig.oidcConfig.authorizationUrl || "",
-        tokenUrl: currentConfig.oidcConfig.tokenUrl || "",
-        userInfoUrl: currentConfig.oidcConfig.userInfoUrl || "",
-      });
-    }
-  }, [currentConfig, form]);
 
   const testOidc = useMutation(
     orpc.admin.testOidcConnection.mutationOptions({
@@ -140,26 +125,26 @@ const RouteComponent = () => {
     form.setValue("provider", value);
 
     const presets: Record<string, Partial<AuthFormValues>> = {
-      keycloak: {
-        providerName: "Keycloak",
-        authorizationUrl: "https://your-keycloak.com/realms/{realm}/protocol/openid-connect/auth",
-        tokenUrl: "https://your-keycloak.com/realms/{realm}/protocol/openid-connect/token",
-        userInfoUrl: "https://your-keycloak.com/realms/{realm}/protocol/openid-connect/userinfo",
+      google: {
+        providerName: "Google",
+        authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+        tokenUrl: "https://oauth2.googleapis.com/token",
+        userInfoUrl: "https://www.googleapis.com/oauth2/v3/userinfo",
       },
-      auth0: {
-        providerName: "Auth0",
-        authorizationUrl: "https://{tenant}.auth0.com/authorize",
-        tokenUrl: "https://{tenant}.auth0.com/oauth/token",
-        userInfoUrl: "https://{tenant}.auth0.com/userinfo",
+      github: {
+        providerName: "GitHub",
+        authorizationUrl: "https://github.com/login/oauth/authorize",
+        tokenUrl: "https://github.com/login/oauth/access_token",
+        userInfoUrl: "https://api.github.com/user",
       },
-      okta: {
-        providerName: "Okta",
-        authorizationUrl: "https://{domain}.okta.com/oauth2/default/v1/authorize",
-        tokenUrl: "https://{domain}.okta.com/oauth2/default/v1/token",
-        userInfoUrl: "https://{domain}.okta.com/oauth2/default/v1/userinfo",
+      discord: {
+        providerName: "Discord",
+        authorizationUrl: "https://discord.com/api/oauth2/authorize",
+        tokenUrl: "https://discord.com/api/oauth2/token",
+        userInfoUrl: "https://discord.com/api/users/@me",
       },
-      oidc: {
-        providerName: "Custom OIDC",
+      custom: {
+        providerName: "Custom Provider",
       },
     };
 
@@ -193,8 +178,11 @@ const RouteComponent = () => {
                     <FormItem>
                       <FormLabel>Provider Type</FormLabel>
                       <Select
-                        onValueChange={handleProviderChange}
-                        defaultValue={field.value}
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          handleProviderChange(value);
+                        }}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -202,10 +190,10 @@ const RouteComponent = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="oidc">Custom OIDC</SelectItem>
-                          <SelectItem value="keycloak">Keycloak</SelectItem>
-                          <SelectItem value="auth0">Auth0</SelectItem>
-                          <SelectItem value="okta">Okta</SelectItem>
+                          <SelectItem value="google">Google</SelectItem>
+                          <SelectItem value="github">GitHub</SelectItem>
+                          <SelectItem value="discord">Discord</SelectItem>
+                          <SelectItem value="custom">Custom Provider</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -374,5 +362,10 @@ const RouteComponent = () => {
 };
 
 export const Route = createFileRoute("/admin/auth-config")({
+  loader: async ({ context }) => {
+    return await context.queryClient.ensureQueryData(
+      orpc.admin.getConfig.queryOptions()
+    );
+  },
   component: RouteComponent,
 });
