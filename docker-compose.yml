@@ -33,24 +33,24 @@ services:
       timeout: 5s
       retries: 5
 
-  pocket-id:
-    image: ghcr.io/pocket-id/pocket-id:v1
-    restart: unless-stopped
-    environment:
-      APP_URL: "${APP_URL}"
-      TRUST_PROXY: "${TRUST_PROXY}"
-    volumes:
-      - "./data:/app/data"
-    networks:
-      atlas:
-        aliases:
-          - atlas-pocketid
-    healthcheck:
-      test: ["CMD", "/app/pocket-id", "healthcheck"]
-      interval: 1m30s
-      timeout: 5s
-      retries: 2
-      start_period: 10s
+  # pocket-id:
+  #   image: ghcr.io/pocket-id/pocket-id:v1
+  #   restart: unless-stopped
+  #   environment:
+  #     APP_URL: "${APP_URL}"
+  #     TRUST_PROXY: "${TRUST_PROXY}"
+  #   volumes:
+  #     - "./data:/app/data"
+  #   networks:
+  #     atlas:
+  #       aliases:
+  #         - atlas-pocketid
+  #   healthcheck:
+  #     test: ["CMD", "/app/pocket-id", "healthcheck"]
+  #     interval: 1m30s
+  #     timeout: 5s
+  #     retries: 2
+  #     start_period: 10s
 
 networks:
   atlas:
