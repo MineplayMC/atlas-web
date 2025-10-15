@@ -3,12 +3,12 @@ version: "3.8"
 services:
   app:
     build: .
-    ports:
-      - "3000:3000"
     volumes:
       - atlas-config:/app/config
     networks:
-      - atlas
+      atlas:
+        aliases:
+          - atlas-web
     environment:
       - NODE_ENV=production
     depends_on:
@@ -22,7 +22,9 @@ services:
       POSTGRES_USER: atlas
       POSTGRES_PASSWORD: atlas_password
     networks:
-      - atlas
+      atlas:
+        aliases:
+          - atlas-postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -33,6 +35,9 @@ services:
 
 networks:
   atlas:
+    name: atlas
+    external: true
+    driver: bridge
 
 volumes:
   atlas-config:
