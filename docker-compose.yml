@@ -36,7 +36,9 @@ services:
   pocket-id:
     image: ghcr.io/pocket-id/pocket-id:v1
     restart: unless-stopped
-    env_file: .env
+    environment:
+      APP_URL: "https://your-pocket-id-domain.com"
+      TRUST_PROXY: "true"
     volumes:
       - "./data:/app/data"
     networks:
