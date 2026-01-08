@@ -6,7 +6,7 @@ services:
     volumes:
       - atlas-config:/app/config
     networks:
-      atlas:
+      mineplay-network:
         aliases:
           - atlas-web
     environment:
@@ -22,7 +22,7 @@ services:
       POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
     networks:
-      atlas:
+      mineplay-network:
         aliases:
           - atlas-postgres
     volumes:
@@ -53,8 +53,8 @@ services:
   #     start_period: 10s
 
 networks:
-  atlas:
-    name: atlas
+  mineplay-network:
+    name: mineplay-network
     external: true
     driver: bridge
 
