@@ -3,6 +3,7 @@ version: "3.8"
 services:
   app:
     build: .
+    restart: unless-stopped
     volumes:
       - atlas-config:/app/config
     networks:
@@ -15,10 +16,11 @@ services:
       postgres:
         condition: service_healthy
       atlas:
-        condition: service_started   
+        condition: service_healthy   
 
   postgres:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: "${POSTGRES_DB}"
       POSTGRES_USER: "${POSTGRES_USER}"
@@ -54,6 +56,12 @@ services:
       mineplay-network:
         aliases:
           - atlas-server
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'java.*atlas' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
 
 networks:
   mineplay-network:
