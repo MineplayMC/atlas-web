@@ -14,6 +14,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      atlas:
+        condition: service_started   
 
   postgres:
     image: postgres:15-alpine
@@ -33,24 +35,25 @@ services:
       timeout: 5s
       retries: 5
 
-  # pocket-id:
-  #   image: ghcr.io/pocket-id/pocket-id:v1
-  #   restart: unless-stopped
-  #   environment:
-  #     APP_URL: "${APP_URL}"
-  #     TRUST_PROXY: "${TRUST_PROXY}"
-  #   volumes:
-  #     - "./data:/app/data"
-  #   networks:
-  #     atlas:
-  #       aliases:
-  #         - atlas-pocketid
-  #   healthcheck:
-  #     test: ["CMD", "/app/pocket-id", "healthcheck"]
-  #     interval: 1m30s
-  #     timeout: 5s
-  #     retries: 2
-  #     start_period: 10s
+  atlas:
+    image: ghcr.io/mineplaymc/atlas/atlas:latest
+    container_name: atlas-server
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/atlas/atlas.yml:/root/atlas/atlas.yml
+      - /root/atlas/groups:/root/atlas/groups
+      - /root/atlas/servers:/root/atlas/servers
+      - /root/atlas/templates:/root/atlas/templates
+      - /root/atlas/data:/root/atlas/data
+      - /root/atlas/cache:/root/atlas/cache
+      - /root/atlas/logs:/root/atlas/logs
+    networks:
+      mineplay-network:
+        aliases:
+          - atlas-server
 
 networks:
   mineplay-network:
