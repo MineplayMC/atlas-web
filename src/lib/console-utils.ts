@@ -1,5 +1,15 @@
 import { LogType, LogLine, LogStyle } from "@/types/console";
 
+// Strips ANSI escape sequences from a string, handling both complete sequences
+// (with ESC character \x1b) and orphaned ones where the ESC character has been
+// dropped during transport (e.g. "[0;39m" instead of "\x1b[0;39m").
+export function stripAnsiCodes(str: string): string {
+  // Strip complete ANSI escape sequences (ESC + [ + params + command)
+  const withoutEsc = str.replace(/\x1b\[[\d;]*[A-Za-z]/g, "");
+  // Strip orphaned ANSI SGR codes where ESC was dropped (e.g. "[0;39m", "[1;31m")
+  return withoutEsc.replace(/\[[\d;]+m/g, "");
+}
+
 export const LOG_STYLES: Record<LogType, LogStyle> = {
   error: {
     type: "error",
@@ -41,7 +51,7 @@ export function parseLog(
   const logRegex = /^\[(\d{2}:\d{2}:\d{2})\s+(\w+)]:?\s*(.+)$/;
   const logLevelRegex = /^(\w+):\s*(.+)$/;
 
-  let line = logString.trim();
+  let line = stripAnsiCodes(logString.trim());
   if (line === "") return null;
 
   // Remove leading colon and space if present
