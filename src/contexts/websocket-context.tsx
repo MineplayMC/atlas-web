@@ -26,6 +26,7 @@ interface WebSocketContextType {
   subscribe: (_callback: (_message: WebSocketMessage) => void) => () => void;
   connect: () => void;
   disconnect: () => void;
+  resetAndConnect: () => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
@@ -177,6 +178,12 @@ export const WebSocketProvider = ({
     connectRef.current?.();
   }, []);
 
+  const resetAndConnect = useCallback(() => {
+    reconnectAttemptsRef.current = 0;
+    setConnectionFailed(false);
+    connectRef.current?.();
+  }, []);
+
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
@@ -268,6 +275,7 @@ export const WebSocketProvider = ({
     subscribe,
     connect,
     disconnect,
+    resetAndConnect,
   };
 
   return (

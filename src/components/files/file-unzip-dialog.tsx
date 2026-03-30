@@ -57,7 +57,8 @@ export const FileUnzipDialog = forwardRef<
       return;
     }
 
-    const zipPath = file.name;
+    const zipPath =
+      currentPath === "/" ? `/${file.name}` : `${currentPath}/${file.name}`;
     const finalDestination = destination.trim() || ".";
     const unzipData = {
       zipPath,
