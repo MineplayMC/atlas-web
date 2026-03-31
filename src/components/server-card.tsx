@@ -36,7 +36,7 @@ const formatBytes = (memory: number) => {
 
 const ServerCard = React.memo(({ server }: { server: Server }) => {
   return (
-    <Link to="/servers/$serverId" params={{ serverId: server.serverId }}>
+    <Link to="/servers/$serverId" params={{ serverId: server.name }}>
       <Card className="cursor-pointer overflow-hidden p-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
         <div className="p-6 pb-0.5">
           <div className="flex items-center justify-between">

@@ -144,7 +144,13 @@ const RouteComponent = () => {
   }
 
   if (!server) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-12">
+        <p className="text-muted-foreground text-sm">
+          Server is offline or starting up&hellip;
+        </p>
+      </div>
+    );
   }
 
   return (

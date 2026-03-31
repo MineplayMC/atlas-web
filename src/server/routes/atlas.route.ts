@@ -14,6 +14,27 @@ import { AuditService } from "@/server/lib/audit";
 import { auth } from "@/server/lib/auth";
 import configManager from "@/server/lib/config-manager";
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Accept either a UUID or a human-readable server name (e.g. "game-1").
+ * When a name is given, look it up via GET /api/v1/servers and return the real UUID.
+ */
+async function resolveServerId(idOrName: string): Promise<string> {
+  if (UUID_REGEX.test(idOrName)) {
+    return idOrName;
+  }
+  const servers = await atlas.getServers();
+  const match = servers.data.find((s) => s.name === idOrName);
+  if (!match) {
+    throw new ORPCError("NOT_FOUND", {
+      message: `Server not found: ${idOrName}`,
+    });
+  }
+  return match.serverId;
+}
+
 const serverListInputSchema = z.object({
   group: z.string().optional(),
   status: z.string().optional(),
@@ -49,7 +70,8 @@ const getServer = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
-    const server = await atlas.getServer(input.server);
+    const serverId = await resolveServerId(input.server);
+    const server = await atlas.getServer(serverId);
     return server.data;
   });
 
@@ -65,7 +87,8 @@ const getServerLogs = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
-    const logs = await atlas.getServerLogs(input.server, input.lines);
+    const serverId = await resolveServerId(input.server);
+    const logs = await atlas.getServerLogs(serverId, input.lines);
     return logs.data;
   });
 
@@ -199,13 +222,15 @@ const startServer = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
+    const serverId = await resolveServerId(input.server);
+
     try {
-      const result = await atlas.startServer(input.server);
+      const result = await atlas.startServer(serverId);
 
       await AuditService.logAction({
         action: "startServer",
         resourceType: "server",
-        resourceId: input.server,
+        resourceId: serverId,
         details: input,
         success: true,
       });
@@ -215,7 +240,7 @@ const startServer = os
       await AuditService.logAction({
         action: "startServer",
         resourceType: "server",
-        resourceId: input.server,
+        resourceId: serverId,
         details: input,
         success: false,
         errorMessage: error instanceof Error ? error.message : "Unknown error",
@@ -236,13 +261,15 @@ const stopServer = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
+    const serverId = await resolveServerId(input.server);
+
     try {
-      const result = await atlas.stopServer(input.server);
+      const result = await atlas.stopServer(serverId);
 
       await AuditService.logAction({
         action: "stopServer",
         resourceType: "server",
-        resourceId: input.server,
+        resourceId: serverId,
         details: input,
         success: true,
       });
@@ -252,7 +279,7 @@ const stopServer = os
       await AuditService.logAction({
         action: "stopServer",
         resourceType: "server",
-        resourceId: input.server,
+        resourceId: serverId,
         details: input,
         success: false,
         errorMessage: error instanceof Error ? error.message : "Unknown error",
@@ -273,13 +300,15 @@ const restartServer = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
+    const serverId = await resolveServerId(input.server);
+
     try {
-      const result = await atlas.restartServer(input.server);
+      const result = await atlas.restartServer(serverId);
 
       await AuditService.logAction({
         action: "restartServer",
         resourceType: "server",
-        resourceId: input.server,
+        resourceId: serverId,
         details: input,
         success: true,
       });
@@ -289,7 +318,7 @@ const restartServer = os
       await AuditService.logAction({
         action: "restartServer",
         resourceType: "server",
-        resourceId: input.server,
+        resourceId: serverId,
         details: input,
         success: false,
         errorMessage: error instanceof Error ? error.message : "Unknown error",
@@ -310,7 +339,8 @@ const getServerFiles = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
-    const files = await atlas.getServerFiles(input.server, input.path);
+    const serverId = await resolveServerId(input.server);
+    const files = await atlas.getServerFiles(serverId, input.path);
     return files.data;
   });
 
@@ -327,15 +357,16 @@ const getServerFileContents = os
     }
 
     try {
+      const serverId = await resolveServerId(input.server);
       const fileContents = await atlas.getServerFileContents(
-        input.server,
+        serverId,
         input.file
       );
 
       await AuditService.logAction({
         action: "getServerFileContents",
         resourceType: "server",
-        resourceId: input.server,
+        resourceId: serverId,
         details: input,
         restorePossible: false,
         success: true,
@@ -377,8 +408,9 @@ const writeServerFileContents = os
     );
 
     try {
+      const serverId = await resolveServerId(input.server);
       const result = await atlas.writeServerFileContents(
-        input.server,
+        serverId,
         input.file,
         input.content
       );
@@ -386,7 +418,7 @@ const writeServerFileContents = os
       await AuditService.logAction({
         action: "writeServerFileContents",
         resourceType: "server",
-        resourceId: input.server,
+        resourceId: serverId,
         details: input,
         backupData,
         success: true,
@@ -426,12 +458,13 @@ const deleteServerFile = os
     );
 
     try {
-      const result = await atlas.deleteServerFile(input.server, input.file);
+      const serverId = await resolveServerId(input.server);
+      const result = await atlas.deleteServerFile(serverId, input.file);
 
       await AuditService.logAction({
         action: "deleteServerFile",
         resourceType: "server",
-        resourceId: input.server,
+        resourceId: serverId,
         details: input,
         backupData,
         success: true,
@@ -467,7 +500,8 @@ const renameServerFile = os
     }
 
     try {
-      const result = await atlas.renameServerFile(input.server, {
+      const serverId = await resolveServerId(input.server);
+      const result = await atlas.renameServerFile(serverId, {
         oldPath: input.oldPath,
         newPath: input.newPath,
       });
@@ -475,7 +509,7 @@ const renameServerFile = os
       await AuditService.logAction({
         action: "renameServerFile",
         resourceType: "server",
-        resourceId: input.server,
+        resourceId: serverId,
         details: input,
         backupData: { originalPath: input.oldPath },
         success: true,
@@ -510,7 +544,8 @@ const moveServerFile = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
-    const result = await atlas.renameServerFile(input.server, {
+    const serverId = await resolveServerId(input.server);
+    const result = await atlas.renameServerFile(serverId, {
       oldPath: input.file,
       newPath: input.newPath,
     });
@@ -530,7 +565,8 @@ const downloadServerFile = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
-    const result = await atlas.downloadServerFile(input.server, input.file);
+    const serverId = await resolveServerId(input.server);
+    const result = await atlas.downloadServerFile(serverId, input.file);
     return result;
   });
 
@@ -546,7 +582,8 @@ const createServerFolder = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
-    const result = await atlas.createServerFolder(input.server, input.path);
+    const serverId = await resolveServerId(input.server);
+    const result = await atlas.createServerFolder(serverId, input.path);
     return result;
   });
 
@@ -564,8 +601,9 @@ const uploadServerFile = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
+    const serverId = await resolveServerId(input.server);
     const result = await atlas.uploadServerFile(
-      input.server,
+      serverId,
       input.path,
       input.file
     );
@@ -584,7 +622,8 @@ const executeServerCommand = os
       throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
     }
 
-    const result = await atlas.executeServerCommand(input.server, {
+    const serverId = await resolveServerId(input.server);
+    const result = await atlas.executeServerCommand(serverId, {
       command: input.command,
     });
     return result.data;
@@ -603,7 +642,8 @@ const getWebSocketToken = os
     }
 
     // Generate WebSocket token via Atlas API
-    const tokenResponse = await atlas.generateWebSocketToken(input.server);
+    const serverId = await resolveServerId(input.server);
+    const tokenResponse = await atlas.generateWebSocketToken(serverId);
 
     if (!tokenResponse.data) {
       throw new ORPCError("INTERNAL_ERROR", {
@@ -614,7 +654,7 @@ const getWebSocketToken = os
     return {
       token: tokenResponse.data.token,
       expiresAt: tokenResponse.data.expiresAt,
-      wsUrl: `${configManager.getAtlasConfig()?.baseUrl!.replace(/^http/, "ws")}/api/v1/servers/${input.server}/ws`,
+      wsUrl: `${configManager.getAtlasConfig()?.baseUrl!.replace(/^http/, "ws")}/api/v1/servers/${serverId}/ws`,
     };
   });
 
@@ -652,7 +692,8 @@ const getServerActivities = os
     }
 
     const { server, ...filters } = input;
-    const activities = await atlas.getServerActivities(server, filters);
+    const serverId = await resolveServerId(server);
+    const activities = await atlas.getServerActivities(serverId, filters);
     return activities;
   });
 
@@ -686,7 +727,8 @@ const zipServerFiles = os
     }
 
     const { server, ...zipData } = input;
-    const result = await atlas.zipServerFiles(server, zipData);
+    const serverId = await resolveServerId(server);
+    const result = await atlas.zipServerFiles(serverId, zipData);
     return result;
   });
 
@@ -703,7 +745,8 @@ const unzipServerFile = os
     }
 
     const { server, ...unzipData } = input;
-    const result = await atlas.unzipServerFile(server, unzipData);
+    const serverId = await resolveServerId(server);
+    const result = await atlas.unzipServerFile(serverId, unzipData);
     return result;
   });
 

@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 import {
   Link,
   Outlet,
   createFileRoute,
-  notFound,
 } from "@tanstack/react-router";
 import {
   CircleStopIcon,
@@ -56,17 +55,29 @@ const links = [
 const ServerContent = () => {
   const { serverId } = Route.useParams();
   const [realtimeServerInfo, setRealtimeServerInfo] = useState<any>(null);
-  const { subscribe } = useWebSocketContext();
+  const { subscribe, connectionFailed, resetAndConnect } = useWebSocketContext();
 
   const { data: server } = useQuery({
     ...orpc.atlas.getServer.queryOptions({
       input: { server: serverId },
     }),
+    retry: false,
+    refetchInterval: (query) => (!query.state.data ? 5000 : false),
   });
 
   const startServerMutation = useStartServerMutation(serverId);
   const stopServerMutation = useStopServerMutation(serverId);
   const restartServerMutation = useRestartServerMutation(serverId);
+
+  // When server becomes available after being absent, reset and reconnect WebSocket
+  const prevServerRef = useRef<typeof server | null>(null);
+  useEffect(() => {
+    if (!prevServerRef.current && server && connectionFailed) {
+      resetAndConnect();
+    }
+    prevServerRef.current = server;
+  }, [server, connectionFailed, resetAndConnect]);
+
   // Subscribe to WebSocket messages (ignore log messages - handled by console)
   useEffect(() => {
     const unsubscribe = subscribe((message) => {
@@ -97,13 +108,12 @@ const ServerContent = () => {
     return unsubscribe;
   }, [subscribe]);
 
-  if (!server) {
-    return <div>Loading...</div>;
-  }
-
   const currentStatus =
-    realtimeServerInfo?.status ?? server.serverInfo?.status ?? "UNKNOWN";
+    realtimeServerInfo?.status ?? server?.serverInfo?.status ?? "UNKNOWN";
   const isStopped = currentStatus === "STOPPED";
+
+  const displayName = server?.name ?? serverId;
+  const displayAddress = server ? `${server.address}:${server.port}` : "—";
 
   return (
     <div className="flex flex-col gap-6">
@@ -112,11 +122,9 @@ const ServerContent = () => {
           <div>
             <div className="flex items-center gap-2">
               {getStatus(currentStatus)}
-              <h1 className="text-2xl font-bold">{server.name}</h1>
+              <h1 className="text-2xl font-bold">{displayName}</h1>
             </div>
-            <p className="text-muted-foreground text-sm">
-              {server.address}:{server.port}
-            </p>
+            <p className="text-muted-foreground text-sm">{displayAddress}</p>
           </div>
         </div>
 
@@ -124,7 +132,7 @@ const ServerContent = () => {
           <Button
             size="sm"
             variant="ghost"
-            disabled={!isStopped || startServerMutation.isPending}
+            disabled={!isStopped || !server || startServerMutation.isPending}
             onClick={() => startServerMutation.mutate({ server: serverId })}
             className="h-[38px] w-[64px] rounded-md border border-green-500 bg-green-600 text-white hover:!bg-green-700 disabled:opacity-50"
           >
@@ -135,14 +143,14 @@ const ServerContent = () => {
             variant="ghost"
             className="h-[38px] w-[64px] rounded-md border border-neutral-500 bg-neutral-700 text-white hover:!bg-neutral-600 disabled:opacity-50"
             onClick={() => restartServerMutation.mutate({ server: serverId })}
-            disabled={isStopped || restartServerMutation.isPending}
+            disabled={isStopped || !server || restartServerMutation.isPending}
           >
             <RefreshCcwIcon size={20} />
           </Button>
           <Button
             size="sm"
             variant="ghost"
-            disabled={isStopped || stopServerMutation.isPending}
+            disabled={isStopped || !server || stopServerMutation.isPending}
             onClick={() => stopServerMutation.mutate({ server: serverId })}
             className="h-[38px] w-[64px] rounded-md border border-red-600 bg-red-800 text-white hover:!bg-red-900 disabled:opacity-50"
           >
@@ -190,19 +198,13 @@ const RouteComponent = () => {
 export const Route = createFileRoute("/_main/servers/$serverId")({
   loader: async ({ context, params }) => {
     try {
-      const server = await context.queryClient.ensureQueryData(
+      return await context.queryClient.ensureQueryData(
         orpc.atlas.getServer.queryOptions({
           input: { server: params.serverId },
         })
       );
-
-      if (!server) {
-        throw notFound();
-      }
-
-      return server;
     } catch {
-      throw notFound();
+      return null;
     }
   },
   head: async ({ loaderData }) => {
