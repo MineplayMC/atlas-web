@@ -32,6 +32,14 @@ const WebSocketContext = createContext<WebSocketContextType | null>(null);
 
 const activeConnections = new Map<string, boolean>();
 
+// How long to wait before the next reconnection cycle after quick retries are exhausted
+const LONG_RETRY_INTERVAL_MS = 30000;
+
+// If no message is received within this window, the connection is treated as a
+// zombie (server went offline without closing the TCP socket) and is closed so
+// the normal reconnect logic can kick in.
+const HEARTBEAT_TIMEOUT_MS = 3000;
+
 // Periodic cleanup of stale connections to prevent memory leaks
 setInterval(() => {
   // Clear all connections periodically as they should be managed by component lifecycle
@@ -58,6 +66,7 @@ export const WebSocketProvider = ({
   );
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const heartbeatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isUnmountedRef = useRef(false);
 
   const tokenMutation = useMutation(
@@ -93,15 +102,32 @@ export const WebSocketProvider = ({
       const socket = new WebSocket(wsUrl);
       setWs(socket);
 
+      // Resets (or starts) the heartbeat timer. If no message arrives within
+      // HEARTBEAT_TIMEOUT_MS the socket is closed so the reconnect logic runs.
+      const resetHeartbeat = (target: WebSocket) => {
+        if (heartbeatTimeoutRef.current) {
+          clearTimeout(heartbeatTimeoutRef.current);
+        }
+        heartbeatTimeoutRef.current = setTimeout(() => {
+          if (!isUnmountedRef.current) {
+            target.close();
+          }
+        }, HEARTBEAT_TIMEOUT_MS);
+      };
+
       socket.addEventListener("open", () => {
         setIsConnected(true);
         setIsConnecting(false);
         setConnectionFailed(false);
         reconnectAttemptsRef.current = 0;
+        resetHeartbeat(socket);
       });
 
       socket.addEventListener("message", (event) => {
         const data: WebSocketMessage = JSON.parse(event.data);
+
+        // Any message from the server means the connection is alive.
+        resetHeartbeat(socket);
 
         if (data.type === "auth-challenge") {
           tokenMutation
@@ -136,6 +162,11 @@ export const WebSocketProvider = ({
       });
 
       socket.addEventListener("close", () => {
+        if (heartbeatTimeoutRef.current) {
+          clearTimeout(heartbeatTimeoutRef.current);
+          heartbeatTimeoutRef.current = null;
+        }
+
         setIsConnected(false);
         setIsConnecting(false);
         setWs(null);
@@ -158,6 +189,18 @@ export const WebSocketProvider = ({
           }, delay);
         } else if (!isUnmountedRef.current) {
           setConnectionFailed(true);
+          // After exhausting quick retries, keep polling at a longer interval so
+          // the WebSocket reconnects as soon as the server comes back online or
+          // is recreated with the same name.
+          reconnectAttemptsRef.current = 0;
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+          }
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (!isUnmountedRef.current) {
+              connectRef.current?.();
+            }
+          }, LONG_RETRY_INTERVAL_MS);
         }
       });
 
@@ -236,6 +279,11 @@ export const WebSocketProvider = ({
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
+      }
+
+      if (heartbeatTimeoutRef.current) {
+        clearTimeout(heartbeatTimeoutRef.current);
+        heartbeatTimeoutRef.current = null;
       }
 
       // Close WebSocket connection properly
