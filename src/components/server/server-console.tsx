@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2Icon, Search } from "lucide-react";
 
 import { TerminalLine } from "@/components/server/terminal-line";
@@ -31,12 +31,28 @@ const ServerConsole = ({ server }: { server: Server }) => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const { sendMessage, isConnected, subscribe } = useWebSocketContext();
+  const queryClient = useQueryClient();
+  const prevIsConnectedRef = useRef(isConnected);
 
   const { data: logsFetched, isLoading } = useQuery(
     orpc.atlas.getServerLogs.queryOptions({
       input: { server: server.serverId, lines: logLimit },
     })
   );
+
+  // When the WebSocket reconnects, clear stale state and reload logs from the API
+  useEffect(() => {
+    if (isConnected && !prevIsConnectedRef.current) {
+      setWebsocketLogs([]);
+      setLastKnownStatus(null);
+      queryClient.invalidateQueries({
+        queryKey: orpc.atlas.getServerLogs.queryOptions({
+          input: { server: server.serverId, lines: logLimit },
+        }).queryKey,
+      });
+    }
+    prevIsConnectedRef.current = isConnected;
+  }, [isConnected, queryClient, server.serverId, logLimit]);
 
   // Parse logs when fetched data changes
   useEffect(() => {

@@ -38,7 +38,7 @@ const LONG_RETRY_INTERVAL_MS = 30000;
 // If no message is received within this window, the connection is treated as a
 // zombie (server went offline without closing the TCP socket) and is closed so
 // the normal reconnect logic can kick in.
-const HEARTBEAT_TIMEOUT_MS = 3000;
+const HEARTBEAT_TIMEOUT_MS = 60000;
 
 // Periodic cleanup of stale connections to prevent memory leaks
 setInterval(() => {
