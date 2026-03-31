@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   CpuIcon,
@@ -56,7 +56,24 @@ const RouteComponent = () => {
     }),
   });
 
-  const { subscribe } = useWebSocketContext();
+  const { subscribe, isConnected } = useWebSocketContext();
+  const queryClient = useQueryClient();
+  const prevIsConnectedRef = useRef(isConnected);
+
+  // When the WebSocket reconnects, discard stale real-time data and refetch
+  // server status from the API so the console reflects the actual state.
+  useEffect(() => {
+    if (isConnected && !prevIsConnectedRef.current) {
+      setRealtimeServerInfo(null);
+      setRealtimeStats(null);
+      queryClient.invalidateQueries({
+        queryKey: orpc.atlas.getServer.queryOptions({
+          input: { server: serverId },
+        }).queryKey,
+      });
+    }
+    prevIsConnectedRef.current = isConnected;
+  }, [isConnected, queryClient, serverId]);
 
   // Subscribe to WebSocket messages
   useEffect(() => {
