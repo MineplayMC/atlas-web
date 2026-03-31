@@ -72,7 +72,7 @@ const ServerContent = () => {
   // When server becomes available after being absent, reset and reconnect WebSocket
   const prevServerRef = useRef<typeof server | null>(null);
   useEffect(() => {
-    if (prevServerRef.current == null && server != null && connectionFailed) {
+    if (!prevServerRef.current && server && connectionFailed) {
       resetAndConnect();
     }
     prevServerRef.current = server;
