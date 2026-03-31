@@ -10,7 +10,6 @@ import {
 
 import { useMutation } from "@tanstack/react-query";
 
-import { useSetupStatus } from "@/hooks/use-setup-status";
 import { orpc } from "@/lib/orpc";
 
 interface WebSocketMessage {
@@ -50,7 +49,6 @@ export const WebSocketProvider = ({
   children,
   serverId,
 }: WebSocketProviderProps) => {
-  const config = useSetupStatus();
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -91,7 +89,7 @@ export const WebSocketProvider = ({
         return;
       }
 
-      const wsUrl = `${config.config?.atlasConfig.websocketUrl}/api/v1/servers/${serverId}/ws?auth=${tokenData.token}`;
+      const wsUrl = `${tokenData.wsUrl}?auth=${tokenData.token}`;
       const socket = new WebSocket(wsUrl);
       setWs(socket);
 
