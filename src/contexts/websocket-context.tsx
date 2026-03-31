@@ -32,6 +32,9 @@ const WebSocketContext = createContext<WebSocketContextType | null>(null);
 
 const activeConnections = new Map<string, boolean>();
 
+// How long to wait before the next reconnection cycle after quick retries are exhausted
+const LONG_RETRY_INTERVAL_MS = 30000;
+
 // Periodic cleanup of stale connections to prevent memory leaks
 setInterval(() => {
   // Clear all connections periodically as they should be managed by component lifecycle
@@ -158,6 +161,18 @@ export const WebSocketProvider = ({
           }, delay);
         } else if (!isUnmountedRef.current) {
           setConnectionFailed(true);
+          // After exhausting quick retries, keep polling at a longer interval so
+          // the WebSocket reconnects as soon as the server comes back online or
+          // is recreated with the same name.
+          reconnectAttemptsRef.current = 0;
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+          }
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (!isUnmountedRef.current) {
+              connectRef.current?.();
+            }
+          }, LONG_RETRY_INTERVAL_MS);
         }
       });
 
