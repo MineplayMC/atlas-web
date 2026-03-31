@@ -654,7 +654,7 @@ const getWebSocketToken = os
     return {
       token: tokenResponse.data.token,
       expiresAt: tokenResponse.data.expiresAt,
-      wsUrl: `${configManager.getAtlasConfig()?.baseUrl!.replace(/^http/, "ws")}/api/v1/servers/${serverId}/ws`,
+      wsUrl: `${configManager.getAtlasConfig()?.websocketUrl}/api/v1/servers/${serverId}/ws`,
     };
   });
 
